@@ -127,3 +127,34 @@ A hand-wired keybaord powered by Python
     If you have a different configuration of raws and columns, you must change `ROWS` and `COLS` in the code.
 
 
+## To be a productive keyboard
+As you may notice, this is a 60% keyboard and it lacks a lot of keys (F1~F12, arrow keys).
+However we can add [features like TMK's layers and composite keys](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md) to make the small keyboard much more powerful.
+Inspired by [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard), we can optimize the keyboard to keep our fingers at the home row, which may help us being more productive.
+
+Here we introduce one feature which is holding a key down to activate a alternate function.
+
+### Using <kbd>D</kbd> for Navigation
+
+
+![](img/d-for-navigation.png)
+
++ <kbd>d</kbd> + <kbd>h</kbd> as <kbd>←</kbd>
++ <kbd>d</kbd> + <kbd>j</kbd> as <kbd>↓</kbd>
++ <kbd>d</kbd> + <kbd>k</kbd> as <kbd>↑</kbd>
++ <kbd>d</kbd> + <kbd>l</kbd> as <kbd>→</kbd>
++ <kbd>d</kbd> + <kbd>u</kbd> as <kbd>PageUp</kbd>
++ <kbd>d</kbd> + <kbd>n</kbd> as <kbd>PageDown</kbd>
+
+To apply the navigation <kbd>d</kbd>, copy `keyboard.py`, `keycodes.py` and `matrix.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
+
+```python
+# code.py
+
+from keyboard import main
+
+main()
+```
+
+### Next - Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
+Todo

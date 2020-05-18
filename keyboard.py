@@ -61,6 +61,13 @@ COORDS = bytearray((
 ))
 
 
+def reset_into_bootloader():
+    import microcontroller
+
+    microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
+    microcontroller.reset()
+
+
 class Queue:
     def __init__(self, size):
         self.size = size
@@ -290,6 +297,8 @@ class Keyboard:
                         if kind == ACT_LAYER_TAP:
                             self.layers |= 1 << layer
                             print('layers {}'.format(self.layers))
+                        elif keycode == BOOTLOADER:
+                            reset_into_bootloader()
                 else:
                     keycode = self.keys[key]
                     dt = (self.scan_time - self.pressed_time[key]) // 1000000

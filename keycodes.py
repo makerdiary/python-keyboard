@@ -503,3 +503,8 @@ MODS_TAP = lambda mods, key: ACTION(ACT_MODS_TAP, (mods << 8) | PYCODE(key))
 MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
 LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | PYCODE(key))
 LAYER_MODS = lambda layer, mods: LAYER_TAP(layer, 0xC0 | mods)
+
+COMMAND = lambda id, opt: ACTION(ACT_COMMAND,  opt << 8 | id)
+
+
+BOOTLOADER = COMMAND(0, 0)

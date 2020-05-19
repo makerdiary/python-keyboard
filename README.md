@@ -128,14 +128,15 @@ A hand-wired keyboard powered by Python
 
 
 ## To be a productive keyboard
-As you may notice, this is a 60% keyboard and it lacks a lot of keys (F1~F12, arrow keys).
-However we can add [features like TMK's layers and composite keys](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md) to make the small keyboard much more powerful.
-Inspired by [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard), we can optimize the keyboard to keep our fingers at the home row, which may help us being more productive.
+As the 60% keyboard lacks a lot of keys (F1~F12, arrow keys and etc). We can add
+[features like TMK's layers and composite keys](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md) to make the small keyboard much more powerful.
+With the idea of [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard) to keep our fingers at the home row, we can optimize the keyboard to make us more productive.
 
-Here we introduce one feature which is holding a key down to activate a alternate function.
+Adding the Tap-key feature, which is holding a key down to activate an alternate function, can make a big difference.
 
 ### Using <kbd>D</kbd> for Navigation
 
+Taping <kbd>d</kbd> outputs <kbd>d</kbd> (press & release quickly), holding <kbd>d</kbd> down activates navigation functions.
 
 ![](img/d-for-navigation.png)
 
@@ -146,7 +147,7 @@ Here we introduce one feature which is holding a key down to activate a alternat
 + <kbd>d</kbd> + <kbd>u</kbd> as <kbd>PageUp</kbd>
 + <kbd>d</kbd> + <kbd>n</kbd> as <kbd>PageDown</kbd>
 
-To apply the navigation <kbd>d</kbd>, copy `keyboard.py`, `keycodes.py` and `matrix.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
+To apply the navigation <kbd>d</kbd>, copy `keyboard.py` and `keycodes.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
 
 ```python
 # code.py
@@ -156,5 +157,9 @@ from keyboard import main
 main()
 ```
 
-### Next - Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
-Todo
+### Using Pair-keys
+Simultaneously pressing two keys (interval less than 25ms) activates an alternate function.
+
+
+### Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
+WIP - Holding <kbd>;</kbd> down outputs <kbd>Ctrl</kbd>

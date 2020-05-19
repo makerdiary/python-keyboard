@@ -16,6 +16,7 @@ from keycodes import *
 ___ = TRANSPARENT
 L1 = LAYER_TAP(1)
 L2 = LAYER_TAP(2)
+L2D = LAYER_TAP(2, D)
 
 
 KEYMAP = (
@@ -23,7 +24,7 @@ KEYMAP = (
     (
         ESC,  1,  2,  3,  4,  5,  6,  7,  8,  9,  0, '-', '=', BACKSPACE,
         TAB,  Q,  W,  E,  R,  T,  Y,  U,  I,  O,  P, '[', ']', '|',
-        CAPS,  A,  S,  D,  F,  G,  H,  J,  K,  L, ';', '"',        ENTER,
+        CAPS,  A,  S,L2D,  F,  G,  H,  J,  K,  L, ';', '"',        ENTER,
         LSHIFT,  Z,  X,  C,  V,  B,  N,  M, ',', '.', '/',        RSHIFT,
         LCTRL, LGUI, LALT,        SPACE,          RALT, MENU,  L1, RCTRL
     ),

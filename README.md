@@ -1,7 +1,7 @@
 Python Keyboard
 ===============
 
-A hand-wired keyboard powered by Python
+A hand-wired USB & Bluetooth keyboard powered by Python
 
 ![](img/python-inside-keyboard.png)
 

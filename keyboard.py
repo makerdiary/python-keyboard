@@ -10,7 +10,7 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 from adafruit_hid.keyboard import Keyboard as _Keyboard
 
-from keycodes import *
+from action_code import *
 
 
 ___ = TRANSPARENT

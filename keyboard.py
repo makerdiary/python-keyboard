@@ -94,6 +94,9 @@ class Queue:
     def preview(self, n=0):
         return self.queue[(self.tail + n) % self.size]
 
+    def __getitem__(self, n):
+        return self.queue[(self.tail + n) % self.size]
+
     def __len__(self):
         length = self.head - self.tail
         return length if length >= 0 else length + self.size
@@ -119,19 +122,19 @@ class Keyboard:
         self.keys = [0] * n
 
         # convert pykey to pycode (unicode string)
-        def pykeycode(x):
+        def action_unicode(x):
             if type(x) is int:
                 return chr(x) if x > 9 else ASCII_TO_KEYCODE[ord(str(x))]
             if type(x) is str and len(x) == 1:
                 return ASCII_TO_KEYCODE[ord(str(x))]
-            raise ValueError('Invalid keycode or keyname {}'.format(x))
+            raise ValueError('Invalid keyname {}'.format(x))
 
-        concat = lambda *a: ''.join((pykeycode(x) for x in a))
+        concat = lambda *a: ''.join((action_unicode(x) for x in a))
 
-        self._keymap = tuple(concat(*layer) for layer in self.keymap)
+        self.unicode_keymap = tuple(concat(*layer) for layer in self.keymap)
 
         self.pair_keys_code = tuple(
-            map(lambda x: ord(pykeycode(x)), self.pair_keys.keys()))
+            map(lambda x: ord(action_unicode(x)), self.pair_keys.keys()))
 
         def get_coord(x): return self.coords[self.keymap[0].index(x)]
 
@@ -142,20 +145,20 @@ class Keyboard:
         self.pair_keys_mask = tuple(map(get_mask, self.pair_keys))
         # print([hex(x) for x in self.pair_keys_mask])
 
-        self.ro = []                                # row as output
+        self.rows_io = []                                # row as output
         for pin in self.rows:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.OUTPUT
             io.drive_mode = digitalio.DriveMode.PUSH_PULL
             io.value = 0
-            self.ro.append(io)
+            self.rows_io.append(io)
 
-        self.ci = []                                # col as input
+        self.cols_io = []                                # col as input
         for pin in self.cols:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.INPUT
             io.pull = digitalio.Pull.DOWN if self.row2col else digitalio.Pull.UP
-            self.ci.append(io)
+            self.cols_io.append(io)
 
         # row selected value depends on diodes' direction
         self.selected_value = bool(self.row2col)
@@ -164,40 +167,40 @@ class Keyboard:
         self.scan_time = time.monotonic_ns()
         pressed_mask = 0
         n_pressed = 0
-        for r, o in enumerate(self.ro):
-            o.value = self.selected_value           # select row
-            for c, i in enumerate(self.ci):
-                key_index = r * len(self.ci) + c
+        for row, row_io in enumerate(self.rows_io):
+            row_io.value = self.selected_value           # select row
+            for col, col_io in enumerate(self.cols_io):
+                key_index = row * len(self.cols_io) + col
                 key_mask = 1 << key_index
-                if i.value == self.selected_value:
+                if col_io.value == self.selected_value:
                     pressed_mask |= key_mask
                     n_pressed += 1
-                    if not (self.pressed_mask & (1 << key_index)):
+                    if not (self.pressed_mask & key_mask):
                         self.pressed_time[key_index] = self.scan_time
                         self.queue.put(key_index)
-                elif self.pressed_mask & (1 << key_index):
+                elif self.pressed_mask & key_mask:
                     self.queue.put(0x80 | key_index)
 
-            o.value = not self.selected_value
+            row_io.value = not self.selected_value
         self.pressed_mask = pressed_mask
         self.pressed_count = n_pressed
 
         return len(self.queue)
 
-    def wait(self, n_events=1, until=None):
+    def wait(self, n_events=1, end_time=None):
         while True:
             n = len(self.queue)
-            if n >= n_events or (until and self.scan_time > until):
+            if n >= n_events or (end_time and self.scan_time > end_time):
                 return n
 
             self.scan()
 
-    def keycode(self, position):
+    def action_code(self, position):
         position = self.coords[position]
 
-        for layer in range(len(self._keymap) - 1, -1, -1):
+        for layer in range(len(self.unicode_keymap) - 1, -1, -1):
             if (self.layers >> layer) & 1:
-                code = self._keymap[layer][position]
+                code = self.unicode_keymap[layer][position]
                 if code == TRANSPARENT:
                     continue
                 return ord(code)
@@ -253,7 +256,7 @@ class Keyboard:
                 mask = 1 << self.queue.preview(0) | 1 << self.queue.preview(1)
                 if mask in self.pair_keys_mask:
                     pair_keys_index = self.pair_keys_mask.index(mask)
-                    keycode = self.pair_keys_code[pair_keys_index]
+                    action_code = self.pair_keys_code[pair_keys_index]
                     key1 = self.queue.get()
                     key2 = self.queue.get()
                     dt = self.pressed_time[key2] - self.pressed_time[key1]
@@ -264,19 +267,19 @@ class Keyboard:
                         dt // 1000000))
 
                     # only one action
-                    self.keys[key1] = keycode
+                    self.keys[key1] = action_code
                     self.keys[key2] = 0
 
-                    if keycode < 2:
+                    if action_code < 2:
                         pass
-                    elif keycode < 0xFF:
-                        press(keycode)
+                    elif action_code < 0xFF:
+                        press(action_code)
                     else:
-                        kind = keycode >> 12
-                        layer = ((keycode >> 8) & 0xF)
+                        kind = action_code >> 12
+                        layer = ((action_code >> 8) & 0xF)
                         if kind < (ACT_MODS_TAP + 1):
                             # todo
-                            mods = (keycode >> 8) & 0x1F
+                            mods = (action_code >> 8) & 0x1F
                         elif kind == ACT_LAYER_TAP:
                             self.layers |= 1 << layer
                             print('layers {}'.format(self.layers))
@@ -285,38 +288,38 @@ class Keyboard:
                 event = self.queue.get()
                 key = event & 0x7F
                 if event & 0x80 == 0:
-                    keycode = self.keycode(key)
-                    self.keys[key] = keycode
-                    print('{} / keycode = {}'.format(key, keycode))
-                    if keycode < 2:
+                    action_code = self.action_code(key)
+                    self.keys[key] = action_code
+                    print('{} / action_code = {}'.format(key, action_code))
+                    if action_code < 2:
                         pass
-                    elif keycode < 0xFF:
-                        press(keycode)
+                    elif action_code < 0xFF:
+                        press(action_code)
                     else:
-                        kind = keycode >> 12
-                        layer = ((keycode >> 8) & 0xF)
+                        kind = action_code >> 12
+                        layer = ((action_code >> 8) & 0xF)
                         if kind == ACT_LAYER_TAP:
                             self.layers |= 1 << layer
                             print('layers {}'.format(self.layers))
-                        elif keycode == BOOTLOADER:
+                        elif action_code == BOOTLOADER:
                             reset_into_bootloader()
                 else:
-                    keycode = self.keys[key]
+                    action_code = self.keys[key]
                     dt = (self.scan_time - self.pressed_time[key]) // 1000000
-                    print('{} \\ keycode = {}, dt = {}'.format(key, keycode, dt))
-                    if keycode < 2:
+                    print('{} \\ action_code = {}, dt = {}'.format(key, action_code, dt))
+                    if action_code < 2:
                         pass
-                    if keycode < 0xFF:
-                        release(keycode)
+                    elif action_code < 0xFF:
+                        release(action_code)
                     else:
-                        kind = keycode >> 12
-                        layer = ((keycode >> 8) & 0xF)
+                        kind = action_code >> 12
+                        layer = ((action_code >> 8) & 0xF)
                         if kind == ACT_LAYER_TAP:
                             self.layers &= ~(1 << layer)
                             print('layers {}'.format(self.layers))
-                            code = keycode & 0xFF
-                            if dt < 500 and code:
-                                send(code)
+                            keycode = action_code & 0xFF
+                            if dt < 500 and keycode:
+                                send(keycode)
 
             if not ble.connected and not ble.advertising:
                 ble.start_advertising(advertisement)

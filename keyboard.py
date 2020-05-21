@@ -318,7 +318,7 @@ class Keyboard:
                 ble.start_advertising(advertisement)
                 ble.advertising = True
 
-            # time.sleep(0.01)
+            print((time.monotonic_ns() - self.scan_time) // 1000000)
 
 
 def main():

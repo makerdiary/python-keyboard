@@ -165,23 +165,26 @@ class Keyboard:
 
     def scan(self):
         self.scan_time = time.monotonic_ns()
+        selected_value = self.selected_value
+        last_pressed_mask = self.pressed_mask
         pressed_mask = 0
         n_pressed = 0
-        for row, row_io in enumerate(self.rows_io):
-            row_io.value = self.selected_value           # select row
-            for col, col_io in enumerate(self.cols_io):
-                key_index = row * len(self.cols_io) + col
-                key_mask = 1 << key_index
-                if col_io.value == self.selected_value:
+        key_index = 0
+        for row_io in self.rows_io:
+            row_io.value = selected_value           # select row
+            for col_io in self.cols_io:
+                if col_io.value == selected_value:
+                    key_mask = 1 << key_index
                     pressed_mask |= key_mask
                     n_pressed += 1
-                    if not (self.pressed_mask & key_mask):
+                    if not (last_pressed_mask & key_mask):
                         self.pressed_time[key_index] = self.scan_time
                         self.queue.put(key_index)
-                elif self.pressed_mask & key_mask:
+                elif last_pressed_mask and (last_pressed_mask & (1 << key_index)):
                     self.queue.put(0x80 | key_index)
-
-            row_io.value = not self.selected_value
+                
+                key_index += 1
+            row_io.value = not selected_value
         self.pressed_mask = pressed_mask
         self.pressed_count = n_pressed
 

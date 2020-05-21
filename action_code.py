@@ -313,134 +313,134 @@ GUI = LEFT_GUI
 
 
 ASCII_TO_KEYCODE = (
-    '\x00'  # NUL
-    '\x01'  # SOH as TRANSPARENT
-    '\x00'  # STX
-    '\x00'  # ETX
-    '\x00'  # EOT
-    '\x00'  # ENQ
-    '\x00'  # ACK
-    '\x00'  # BEL \a
-    '\x2a'  # BS BACKSPACE \b
-    '\x2b'  # TAB \t
-    '\x28'  # LF \n RETURN / ENTER
-    '\x00'  # VT \v
-    '\x00'  # FF \f
-    '\x28'  # CR \r as RETURN
-    '\x00'  # SO
-    '\x00'  # SI
-    '\x00'  # DLE
-    '\x00'  # DC1
-    '\x00'  # DC2
-    '\x00'  # DC3
-    '\x00'  # DC4
-    '\x00'  # NAK
-    '\x00'  # SYN
-    '\x00'  # ETB
-    '\x00'  # CAN
-    '\x00'  # EM
-    '\x00'  # SUB
-    '\x29'  # ESC
-    '\x00'  # FS
-    '\x00'  # GS
-    '\x00'  # RS
-    '\x00'  # US
-    '\x2c'  # SPACE
-    '\x1e'  # ! (shift 1)
-    '\x34'  # ' (shift ')
-    '\x20'  # # (shift 3)
-    '\x21'  # $ (shift 4)
-    '\x22'  # % (shift 5)
-    '\x24'  # & (shift 7)
-    '\x34'  # '
-    '\x26'  # ( (shift 9)
-    '\x27'  # ) (shift 0)
-    '\x25'  # * (shift 8)
-    '\x2e'  # + (shift =)
-    '\x36'  # ,
-    '\x2d'  # -
-    '\x37'  # .
-    '\x38'  # /
-    '\x27'  # 0
-    '\x1e'  # 1
-    '\x1f'  # 2
-    '\x20'  # 3
-    '\x21'  # 4
-    '\x22'  # 5
-    '\x23'  # 6
-    '\x24'  # 7
-    '\x25'  # 8
-    '\x26'  # 9
-    '\x33'  # : (shift ;)
-    '\x33'  # ;
-    '\x36'  # < (shift ,)
-    '\x2e'  # =
-    '\x37'  # > (shift .)
-    '\x38'  # ? (shift /)
-    '\x1f'  # @ (shift 2)
-    '\x04'  # A
-    '\x05'  # B
-    '\x06'  # C
-    '\x07'  # D
-    '\x08'  # E
-    '\x09'  # F
-    '\x0a'  # G
-    '\x0b'  # H
-    '\x0c'  # I
-    '\x0d'  # J
-    '\x0e'  # K
-    '\x0f'  # L
-    '\x10'  # M
-    '\x11'  # N
-    '\x12'  # O
-    '\x13'  # P
-    '\x14'  # Q
-    '\x15'  # R
-    '\x16'  # S
-    '\x17'  # T
-    '\x18'  # U
-    '\x19'  # V
-    '\x1a'  # W
-    '\x1b'  # X
-    '\x1c'  # Y
-    '\x1d'  # Z
-    '\x2f'  # [
-    '\x31'  # \ backslash
-    '\x30'  # ]
-    '\x23'  # ^ (shift 6)
-    '\x2d'  # _ (shift -)
-    '\x35'  # `
-    '\x04'  # a
-    '\x05'  # b
-    '\x06'  # c
-    '\x07'  # d
-    '\x08'  # e
-    '\x09'  # f
-    '\x0a'  # g
-    '\x0b'  # h
-    '\x0c'  # i
-    '\x0d'  # j
-    '\x0e'  # k
-    '\x0f'  # l
-    '\x10'  # m
-    '\x11'  # n
-    '\x12'  # o
-    '\x13'  # p
-    '\x14'  # q
-    '\x15'  # r
-    '\x16'  # s
-    '\x17'  # t
-    '\x18'  # u
-    '\x19'  # v
-    '\x1a'  # w
-    '\x1b'  # x
-    '\x1c'  # y
-    '\x1d'  # z
-    '\x2f'  # { (shift [)
-    '\x31'  # | (shift \)
-    '\x30'  # } (shift ])
-    '\x35'  # ~ (shift `)
-    '\x4c'  # DEL DELETE Forward
+    b'\x00'  # NUL
+    b'\x01'  # SOH as TRANSPARENT
+    b'\x00'  # STX
+    b'\x00'  # ETX
+    b'\x00'  # EOT
+    b'\x00'  # ENQ
+    b'\x00'  # ACK
+    b'\x00'  # BEL \a
+    b'\x2a'  # BS BACKSPACE \b
+    b'\x2b'  # TAB \t
+    b'\x28'  # LF \n RETURN / ENTER
+    b'\x00'  # VT \v
+    b'\x00'  # FF \f
+    b'\x28'  # CR \r as RETURN
+    b'\x00'  # SO
+    b'\x00'  # SI
+    b'\x00'  # DLE
+    b'\x00'  # DC1
+    b'\x00'  # DC2
+    b'\x00'  # DC3
+    b'\x00'  # DC4
+    b'\x00'  # NAK
+    b'\x00'  # SYN
+    b'\x00'  # ETB
+    b'\x00'  # CAN
+    b'\x00'  # EM
+    b'\x00'  # SUB
+    b'\x29'  # ESC
+    b'\x00'  # FS
+    b'\x00'  # GS
+    b'\x00'  # RS
+    b'\x00'  # US
+    b'\x2c'  # SPACE
+    b'\x1e'  # ! (shift 1)
+    b'\x34'  # ' (shift ')
+    b'\x20'  # # (shift 3)
+    b'\x21'  # $ (shift 4)
+    b'\x22'  # % (shift 5)
+    b'\x24'  # & (shift 7)
+    b'\x34'  # '
+    b'\x26'  # ( (shift 9)
+    b'\x27'  # ) (shift 0)
+    b'\x25'  # * (shift 8)
+    b'\x2e'  # + (shift =)
+    b'\x36'  # ,
+    b'\x2d'  # -
+    b'\x37'  # .
+    b'\x38'  # /
+    b'\x27'  # 0
+    b'\x1e'  # 1
+    b'\x1f'  # 2
+    b'\x20'  # 3
+    b'\x21'  # 4
+    b'\x22'  # 5
+    b'\x23'  # 6
+    b'\x24'  # 7
+    b'\x25'  # 8
+    b'\x26'  # 9
+    b'\x33'  # : (shift ;)
+    b'\x33'  # ;
+    b'\x36'  # < (shift ,)
+    b'\x2e'  # =
+    b'\x37'  # > (shift .)
+    b'\x38'  # ? (shift /)
+    b'\x1f'  # @ (shift 2)
+    b'\x04'  # A
+    b'\x05'  # B
+    b'\x06'  # C
+    b'\x07'  # D
+    b'\x08'  # E
+    b'\x09'  # F
+    b'\x0a'  # G
+    b'\x0b'  # H
+    b'\x0c'  # I
+    b'\x0d'  # J
+    b'\x0e'  # K
+    b'\x0f'  # L
+    b'\x10'  # M
+    b'\x11'  # N
+    b'\x12'  # O
+    b'\x13'  # P
+    b'\x14'  # Q
+    b'\x15'  # R
+    b'\x16'  # S
+    b'\x17'  # T
+    b'\x18'  # U
+    b'\x19'  # V
+    b'\x1a'  # W
+    b'\x1b'  # X
+    b'\x1c'  # Y
+    b'\x1d'  # Z
+    b'\x2f'  # [
+    b'\x31'  # \ backslash
+    b'\x30'  # ]
+    b'\x23'  # ^ (shift 6)
+    b'\x2d'  # _ (shift -)
+    b'\x35'  # `
+    b'\x04'  # a
+    b'\x05'  # b
+    b'\x06'  # c
+    b'\x07'  # d
+    b'\x08'  # e
+    b'\x09'  # f
+    b'\x0a'  # g
+    b'\x0b'  # h
+    b'\x0c'  # i
+    b'\x0d'  # j
+    b'\x0e'  # k
+    b'\x0f'  # l
+    b'\x10'  # m
+    b'\x11'  # n
+    b'\x12'  # o
+    b'\x13'  # p
+    b'\x14'  # q
+    b'\x15'  # r
+    b'\x16'  # s
+    b'\x17'  # t
+    b'\x18'  # u
+    b'\x19'  # v
+    b'\x1a'  # w
+    b'\x1b'  # x
+    b'\x1c'  # y
+    b'\x1d'  # z
+    b'\x2f'  # { (shift [)
+    b'\x31'  # | (shift \)
+    b'\x30'  # } (shift ])
+    b'\x35'  # ~ (shift `)
+    b'\x4c'  # DEL DELETE Forward
 )
 
 
@@ -478,13 +478,13 @@ ACT_COMMAND         = 0b1110
 ACT_FUNCTION        = 0b1111
 
 
-def PYCODE(x):
+# convert keyname to action code
+def get_action_code(x):
     if type(x) is int:
-        return x if x > 9 else ord(ASCII_TO_KEYCODE[ord(str(x))])
+        return x if x > 9 else ASCII_TO_KEYCODE[ord(str(x))]
     if type(x) is str and len(x) == 1:
-        return ord(ASCII_TO_KEYCODE[ord(str(x))])
-    raise ValueError('Invalid pycode {}'.format(x))
-
+        return ASCII_TO_KEYCODE[ord(str(x))]
+    raise ValueError('Invalid keyname {}'.format(x))
 
 def MODS(*args):
     MAP = { LCTRL: 1, LSHIFT: 2, LALT: 4, LGUI: 8, RCTRL: 0x11, RSHIFT: 0x12, RALT: 0x14, RGUI: 0x18 }
@@ -498,13 +498,12 @@ def MODS(*args):
 
 ACTION = lambda kind, param: (kind << 12) | param
 
-MODS_KEY = lambda mods, key: ACTION(ACT_MODS, (mods << 8) | PYCODE(key))
-MODS_TAP = lambda mods, key: ACTION(ACT_MODS_TAP, (mods << 8) | PYCODE(key))
+MODS_KEY = lambda mods, key: ACTION(ACT_MODS, (mods << 8) | get_action_code(key))
+MODS_TAP = lambda mods, key: ACTION(ACT_MODS_TAP, (mods << 8) | get_action_code(key))
 MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
-LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | PYCODE(key))
+LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | get_action_code(key))
 LAYER_MODS = lambda layer, mods: LAYER_TAP(layer, 0xC0 | mods)
 
 COMMAND = lambda id, opt: ACTION(ACT_COMMAND,  opt << 8 | id)
-
 
 BOOTLOADER = COMMAND(0, 0)

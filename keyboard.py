@@ -1,4 +1,5 @@
 
+import array
 import digitalio
 import time
 import usb_hid
@@ -121,20 +122,11 @@ class Keyboard:
         self.pressed_time = [0] * n
         self.keys = [0] * n
 
-        # convert pykey to pycode (unicode string)
-        def action_unicode(x):
-            if type(x) is int:
-                return chr(x) if x > 9 else ASCII_TO_KEYCODE[ord(str(x))]
-            if type(x) is str and len(x) == 1:
-                return ASCII_TO_KEYCODE[ord(str(x))]
-            raise ValueError('Invalid keyname {}'.format(x))
-
-        concat = lambda *a: ''.join((action_unicode(x) for x in a))
-
-        self.unicode_keymap = tuple(concat(*layer) for layer in self.keymap)
+        convert = lambda a: array.array('H', (get_action_code(k) for k in a))
+        self.actonmap = tuple(convert(layer) for layer in self.keymap)
 
         self.pair_keys_code = tuple(
-            map(lambda x: ord(action_unicode(x)), self.pair_keys.keys()))
+            map(lambda x: get_action_code(x), self.pair_keys.keys()))
 
         def get_coord(x): return self.coords[self.keymap[0].index(x)]
 
@@ -192,21 +184,19 @@ class Keyboard:
 
     def wait(self, n_events=1, end_time=None):
         while True:
-            n = len(self.queue)
+            n = self.scan()
             if n >= n_events or (end_time and self.scan_time > end_time):
                 return n
-
-            self.scan()
 
     def action_code(self, position):
         position = self.coords[position]
 
-        for layer in range(len(self.unicode_keymap) - 1, -1, -1):
+        for layer in range(len(self.actonmap) - 1, -1, -1):
             if (self.layers >> layer) & 1:
-                code = self.unicode_keymap[layer][position]
+                code = self.actonmap[layer][position]
                 if code == TRANSPARENT:
                     continue
-                return ord(code)
+                return code
         return 0
 
     def run(self):

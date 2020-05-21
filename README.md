@@ -147,7 +147,7 @@ Taping <kbd>d</kbd> outputs <kbd>d</kbd> (press & release quickly), holding <kbd
 + <kbd>d</kbd> + <kbd>u</kbd> as <kbd>PageUp</kbd>
 + <kbd>d</kbd> + <kbd>n</kbd> as <kbd>PageDown</kbd>
 
-To apply the navigation <kbd>d</kbd>, copy `keyboard.py` and `keycodes.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
+To apply the navigation <kbd>d</kbd>, copy `keyboard.py` and `action_code.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
 
 ```python
 # code.py

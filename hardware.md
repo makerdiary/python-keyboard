@@ -1,6 +1,8 @@
 Hand-wiring a Keyboard
 ======================
 
+[中文](https://zhuanlan.zhihu.com/p/137298760)
+
 ## Materials
 + 0.8mm brass wire
 + 61+ switches

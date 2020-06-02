@@ -478,6 +478,20 @@ ACT_COMMAND         = 0b1110
 ACT_FUNCTION        = 0b1111
 
 
+OP_BIT_AND = 0
+OP_BIT_OR  = 1
+OP_BIT_XOR = 2
+OP_BIT_SET = 3
+
+ON_PRESS    = 1
+ON_RELEASE  = 2
+ON_BOTH     = 3
+
+
+OP_TAP_TOGGLE = 0xF0
+
+
+
 # convert keyname to action code
 def get_action_code(x):
     if type(x) is int:
@@ -501,7 +515,14 @@ ACTION = lambda kind, param: (kind << 12) | param
 MODS_KEY = lambda mods, key: ACTION(ACT_MODS, (mods << 8) | get_action_code(key))
 MODS_TAP = lambda mods, key: ACTION(ACT_MODS_TAP, (mods << 8) | get_action_code(key))
 MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
+
+LAYER_BITOP = lambda op, part, bits, on: ACTION(ACT_LAYER, op<<10|on<<8|part<<5|(bits&0x1f))
+LAYER_BIT_XOR = lambda part, bits, on: LAYER_BITOP(OP_BIT_XOR, part, bits, on)
+LAYER_INVERT = lambda layer, on: LAYER_BIT_XOR(layer/4,   1<<(layer%4),  on)
+LAYER_TOGGLE = lambda layer: LAYER_INVERT(layer, ON_RELEASE)
+
 LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | get_action_code(key))
+LAYER_TAP_TOGGLE = lambda layer: LAYER_TAP(layer, OP_TAP_TOGGLE)
 LAYER_MODS = lambda layer, mods: LAYER_TAP(layer, 0xC0 | mods)
 
 COMMAND = lambda id, opt: ACTION(ACT_COMMAND,  opt << 8 | id)

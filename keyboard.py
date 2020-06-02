@@ -15,9 +15,12 @@ from action_code import *
 
 
 ___ = TRANSPARENT
+BOOT = BOOTLOADER
 L1 = LAYER_TAP(1)
 L2 = LAYER_TAP(2)
 L2D = LAYER_TAP(2, D)
+L3 = LAYER_TAP(3)
+T3 = LAYER_TAP_TOGGLE(3)
 
 
 KEYMAP = (
@@ -35,7 +38,7 @@ KEYMAP = (
         '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
         ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
         ___,LEFT,DOWN,RIGHT,___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
+        ___, ___, ___, ___, ___,BOOT, ___, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -47,6 +50,15 @@ KEYMAP = (
         ___, ___, ___, ___, ___, ___,PGDN, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
+
+    # layer 3
+    (
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,     UP,
+        ___, ___, ___,                ___,               ___,LEFT,DOWN,RIGHT
+    ),
 )
 
 
@@ -54,13 +66,13 @@ ROWS = (P27, P13, P30, P20, P3)
 COLS = (P26, P31, P29, P28, P5, P4, P24, P25, P23, P22, P14, P15, P16, P17)
 
 
-COORDS = bytearray((
+COORDS = (
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
     14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
     28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,  0, 40,
     41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  0, 52,  0,
     53, 55, 54,  0,  0, 56,  0,  0, 57, 58, 59, 60,  0,  0
-))
+)
 
 
 def reset_into_bootloader():
@@ -128,11 +140,14 @@ class Keyboard:
         self.pair_keys_code = tuple(
             map(lambda x: get_action_code(x), self.pair_keys.keys()))
 
-        def get_coord(x): return self.coords[self.keymap[0].index(x)]
+        def get_coord(x): return self.coords.index(self.keymap[0].index(x))
 
         def get_mask(x):
             keys = self.pair_keys[x]
-            return 1 << get_coord(keys[0]) | 1 << get_coord(keys[1])
+            mask = 0
+            for key in keys:
+                mask |= 1 << get_coord(key)
+            return mask
 
         self.pair_keys_mask = tuple(map(get_mask, self.pair_keys))
         # print([hex(x) for x in self.pair_keys_mask])
@@ -188,13 +203,19 @@ class Keyboard:
             if n >= n_events or (end_time and self.scan_time > end_time):
                 return n
 
+    def wait_for_mask(self, mask, end_time=None):
+        while True:
+            n = self.scan()
+            if mask == self.pressed_mask or (self.pressed_mask & mask != self.pressed_mask) or (end_time and self.scan_time > end_time):
+                return n
+
     def action_code(self, position):
         position = self.coords[position]
 
         for layer in range(len(self.actonmap) - 1, -1, -1):
             if (self.layers >> layer) & 1:
                 code = self.actonmap[layer][position]
-                if code == TRANSPARENT:
+                if code == get_action_code(TRANSPARENT):
                     continue
                 return code
         return 0
@@ -242,26 +263,29 @@ class Keyboard:
             if n_events == 1 and self.pressed_count == 1:
                 for mask in self.pair_keys_mask:
                     if self.pressed_mask & mask == self.pressed_mask:
-                        n_events = self.wait(2, self.scan_time + 25000000)
+                        n_events = self.wait_for_mask(mask, self.scan_time + 30000000)
                         break
 
-            if n_events >= 2:
-                mask = 1 << self.queue.preview(0) | 1 << self.queue.preview(1)
+            if n_events >= 2 and n_events == self.pressed_count:
+                mask = 0
+                for i in range(n_events):
+                    mask |= 1 << self.queue.preview(i)
                 if mask in self.pair_keys_mask:
                     pair_keys_index = self.pair_keys_mask.index(mask)
                     action_code = self.pair_keys_code[pair_keys_index]
-                    key1 = self.queue.get()
-                    key2 = self.queue.get()
-                    dt = self.pressed_time[key2] - self.pressed_time[key1]
-                    print('pair keys {} ({}, {}), dt = {}'.format(
+                    keys = []
+                    for _ in range(n_events):
+                        key = self.queue.get()
+                        self.keys[key] = 0
+                        keys.append(key)
+                        
+                    dt = self.pressed_time[keys[-1]] - self.pressed_time[keys[0]]
+                    print('pair keys {} {}, dt = {}'.format(
                         pair_keys_index,
-                        key1,
-                        key2,
+                        keys,
                         dt // 1000000))
-
-                    # only one action
-                    self.keys[key1] = action_code
-                    self.keys[key2] = 0
+                        
+                    self.keys[keys[0]] = action_code
 
                     if action_code < 2:
                         pass
@@ -269,12 +293,23 @@ class Keyboard:
                         press(action_code)
                     else:
                         kind = action_code >> 12
-                        layer = ((action_code >> 8) & 0xF)
-                        if kind < (ACT_MODS_TAP + 1):
-                            # todo
-                            mods = (action_code >> 8) & 0x1F
-                        elif kind == ACT_LAYER_TAP:
-                            self.layers |= 1 << layer
+                        if kind == ACT_LAYER_TAP:
+                            layer = ((action_code >> 8) & 0xF)
+                            mask = 1 << layer
+                            keycode = action_code & 0xFF
+                            print((keycode, OP_TAP_TOGGLE))
+                            if keycode != OP_TAP_TOGGLE:
+                                n_events = self.wait(1, self.pressed_time[key] + 500000000)
+                                if n_events > 0 and self.queue.preview() == (key | 0x80):
+                                    print('press & release quickly')
+                                    self.keys[key] = keycode
+                                    press(keycode)
+                                else:
+                                    self.layers |= mask
+                            else:
+                                print('toggle {}'.format(self.layers))
+                                self.layers = (self.layers & ~mask) | (mask & ~self.layers)
+                            
                             print('layers {}'.format(self.layers))
 
             while len(self.queue):
@@ -290,9 +325,22 @@ class Keyboard:
                         press(action_code)
                     else:
                         kind = action_code >> 12
-                        layer = ((action_code >> 8) & 0xF)
                         if kind == ACT_LAYER_TAP:
-                            self.layers |= 1 << layer
+                            layer = ((action_code >> 8) & 0xF)
+                            mask = 1 << layer
+                            keycode = action_code & 0xFF
+                            if keycode != OP_TAP_TOGGLE:
+                                n_events = self.wait(1, self.pressed_time[key] + 500000000)
+                                if n_events > 0 and self.queue.preview() == (key | 0x80):
+                                    print('press & release quickly')
+                                    self.keys[key] = keycode
+                                    press(keycode)
+                                else:
+                                    self.layers |= mask
+                            else:
+                                print('toggle {}'.format(self.layers))
+                                self.layers = (self.layers & ~mask) | (mask & ~self.layers)
+                            
                             print('layers {}'.format(self.layers))
                         elif action_code == BOOTLOADER:
                             reset_into_bootloader()
@@ -306,13 +354,14 @@ class Keyboard:
                         release(action_code)
                     else:
                         kind = action_code >> 12
-                        layer = ((action_code >> 8) & 0xF)
                         if kind == ACT_LAYER_TAP:
-                            self.layers &= ~(1 << layer)
-                            print('layers {}'.format(self.layers))
+                            layer = ((action_code >> 8) & 0xF)
                             keycode = action_code & 0xFF
-                            if dt < 500 and keycode:
-                                send(keycode)
+                            if keycode != OP_TAP_TOGGLE:
+                                self.layers &= ~(1 << layer)
+                                print('layers {}'.format(self.layers))
+                            # if dt < 500 and keycode:
+                                # send(keycode)
 
             if not ble.connected and not ble.advertising:
                 ble.start_advertising(advertisement)
@@ -323,7 +372,7 @@ class Keyboard:
 
 def main():
     kbd = Keyboard()
-    kbd.pair_keys = {L2: (S, D), L1: (J, K)}
+    kbd.pair_keys = {T3: (L1, RCTRL)}
     kbd.run()
 
 

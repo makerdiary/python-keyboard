@@ -172,14 +172,18 @@ class Keyboard:
 
     def scan(self):
         self.scan_time = time.monotonic_ns()
+
+        # use local variables to speed up
         selected_value = self.selected_value
         last_pressed_mask = self.pressed_mask
+        cols_io = self.cols_io
+
         pressed_mask = 0
         n_pressed = 0
         key_index = 0
         for row_io in self.rows_io:
             row_io.value = selected_value           # select row
-            for col_io in self.cols_io:
+            for col_io in cols_io:
                 if col_io.value == selected_value:
                     key_mask = 1 << key_index
                     pressed_mask |= key_mask

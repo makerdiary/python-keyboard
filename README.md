@@ -1,6 +1,9 @@
 Python Keyboard
 ===============
 
+  中文 | [English][1]
+------|--------------
+
 这是一个手焊的 USB 和蓝牙双模键盘，还是一个里面跑 Python 的键盘
 
 
@@ -162,3 +165,6 @@ main()
 + 长按 <kbd>;</kbd> 用作 <kbd>Ctrl</kbd>
 + 宏功能
 + 优化速度
+
+
+[1]: https://github.com/makerdiary/python-keyboard

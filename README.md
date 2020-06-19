@@ -1,6 +1,9 @@
 Python Keyboard
 ===============
 
+ English | [中文][1]
+---------|----------
+
 A hand-wired USB & Bluetooth keyboard powered by Python
 
 ![](img/python-inside-keyboard.png)
@@ -163,3 +166,14 @@ Simultaneously pressing two keys (interval less than 25ms) activates an alternat
 
 ### Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
 WIP - Holding <kbd>;</kbd> down outputs <kbd>Ctrl</kbd>
+
+## Todo
++ <kbd>;</kbd> as <kbd>Ctrl</kbd>
++ add macro
++ add system keys and cosumer keys
++ add mouse keys
++ reduce latency
+
+
+
+[1]: https://gitee.com/makerdiary/python-keyboard

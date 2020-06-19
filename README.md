@@ -1,17 +1,18 @@
 Python Keyboard
 ===============
 
-A hand-wired USB & Bluetooth keyboard powered by Python
+这是一个手焊的 USB 和蓝牙双模键盘，还是一个里面跑 Python 的键盘
+
 
 ![](img/python-inside-keyboard.png)
 
 ![](img/colorful-keycaps.jpg)
 
 
-## Steps
-1.  [hand-wire the keyboard](hardware.md)
-2.  Follow [the guide - How to Program Pitaya Go](https://wiki.makerdiary.com/pitaya-go/programming/) to flash [CircuitPython firmware](circuitpython-5.3.0-for-pitaya-go.hex)
-3.  Download two CircuitPython libraries - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID) and put them into the `lib` directory of the USB drive named CIRCUITPY.
+## 自己动手造键盘
+1.  [手焊键盘](hardware.md)
+2.  参考 [Pitaya Go 下载教程](https://wiki.makerdiary.com/pitaya-go/programming/) 更新 [CircuitPython 固件](circuitpython-5.3.0-for-pitaya-go.hex)，固件更新之后，Pitaya Go 会在电脑端模拟出一个名为 `CIRCUITPY` 的 U 盘和一个串口
+3.  下载两个 CircuitPython 库 - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID)，然后它们放在 `CIRCUITPY` U 盘的 `lib` 目录，U 盘内容结构，如下：
 
     ```
     CIRCUITPY
@@ -21,7 +22,7 @@ A hand-wired USB & Bluetooth keyboard powered by Python
         └───adafruit_hid
     ```
 
-4.  Copy the Python code to `code.py`. When `code.py` is reloaded, you will get a keyboard with USB & Bluetooth
+4.  把以下 Python 代码拷贝到 `code.py`，保存之后 `code.py` 会被重新加载运行，这时你就得到了一个 USB + 蓝牙的双模键盘
 
 
     ```python
@@ -124,30 +125,28 @@ A hand-wired USB & Bluetooth keyboard powered by Python
         main()
     ```
 
-    If you have a different configuration of raws and columns, you must change `ROWS` and `COLS` in the code.
+    如果你的键盘矩阵连接到 Pitaya Go 的 IO 有所不同， 你需要要更改代码中 `ROWS` 和 `COLS`
 
 
-## To be a productive keyboard
-As the 60% keyboard lacks a lot of keys (F1~F12, arrow keys and etc). We can add
-[features like TMK's layers and composite keys](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md) to make the small keyboard much more powerful.
-With the idea of [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard) to keep our fingers at the home row, we can optimize the keyboard to make us more productive.
+## 更进一步——让键盘更具生产力
+这是一个 60% 键盘，缺少了包括 F1~F12、 方向键、小键盘等键位。
 
-Adding the Tap-key feature, which is holding a key down to activate an alternate function, can make a big difference.
+但通过引入[ TMK ](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md)中的层级切换和组合按键功能，并融入 [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard) 中把手指尽量停留在 <kbd>A</kbd>、<kbd>S</kbd>、<kbd>D</kbd>、<kbd>F</kbd> 和 <kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>、<kbd>;</kbd> 等起始键位的理念，我们可以让这个小键盘更具生产力。
 
-### Using <kbd>D</kbd> for Navigation
+这里引入 Tap-key 功能，即按某个按键不放激活另外的功能。
 
-Taping <kbd>d</kbd> outputs <kbd>d</kbd> (press & release quickly), holding <kbd>d</kbd> down activates navigation functions.
+比如把 <kbd>d</kbd> 用作 Tap-key，即短按 <kbd>d</kbd> 输出 <kbd>d</kbd>， 按住 <kbd>d</kbd> 不放则激活移动光标功能，<kbd>H</kbd>、<kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>被映射为方向键，而 <kbd>U</kbd> 和 <kbd>N</kbd> 则为 <kbb>PgUp</kbd> 和 <kbd>PgDn</kbd>。
 
 ![](img/d-for-navigation.png)
 
-+ <kbd>d</kbd> + <kbd>h</kbd> as <kbd>←</kbd>
-+ <kbd>d</kbd> + <kbd>j</kbd> as <kbd>↓</kbd>
-+ <kbd>d</kbd> + <kbd>k</kbd> as <kbd>↑</kbd>
-+ <kbd>d</kbd> + <kbd>l</kbd> as <kbd>→</kbd>
-+ <kbd>d</kbd> + <kbd>u</kbd> as <kbd>PageUp</kbd>
-+ <kbd>d</kbd> + <kbd>n</kbd> as <kbd>PageDown</kbd>
++ <kbd>d</kbd> + <kbd>h</kbd> → <kbd>←</kbd>
++ <kbd>d</kbd> + <kbd>j</kbd> → <kbd>↓</kbd>
++ <kbd>d</kbd> + <kbd>k</kbd> → <kbd>↑</kbd>
++ <kbd>d</kbd> + <kbd>l</kbd> → <kbd>→</kbd>
++ <kbd>d</kbd> + <kbd>u</kbd> → <kbd>PgUp</kbd>
++ <kbd>d</kbd> + <kbd>n</kbd> → <kbd>PgDn</kbd>
 
-To apply the navigation <kbd>d</kbd>, copy `keyboard.py` and `action_code.py` to `CIRCUITPY`, and then modify `code.py` to import the new keyboard
+要实现这个功能，把 `keyboard.py` 和 `action_code.py` 复制到 `CIRCUITPY` U 盘中，然后将 `code.py` 修改为：
 
 ```python
 # code.py
@@ -157,9 +156,9 @@ from keyboard import main
 main()
 ```
 
-### Using Pair-keys
-Simultaneously pressing two keys (interval less than 25ms) activates an alternate function.
+另外，这个 Python 键盘还支持了同时按下两个按键 (间隔不超过25ms) 激活特殊功能，也计划支持长按 <kbd>;</kbd> 用作 <kbd>Ctrl</kbd>，用 <kbd>;</kbd> + <kbd>c</kbd> 替代 <kbd>Ctrl</kbd> + <kbd>c</kbd>，在 VS Code 中使用很方便。
 
-
-### Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
-WIP - Holding <kbd>;</kbd> down outputs <kbd>Ctrl</kbd>
+## Todo
++ 长按 <kbd>;</kbd> 用作 <kbd>Ctrl</kbd>
++ 宏功能
++ 优化速度

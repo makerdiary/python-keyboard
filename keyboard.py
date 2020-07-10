@@ -3,7 +3,7 @@ import array
 import digitalio
 import time
 import usb_hid
-from board import *
+from microcontroller.pin import *
 
 import adafruit_ble
 from adafruit_ble.advertising import Advertisement
@@ -62,16 +62,16 @@ KEYMAP = (
 )
 
 
-ROWS = (P27, P13, P30, P20, P3)
-COLS = (P26, P31, P29, P28, P5, P4, P24, P25, P23, P22, P14, P15, P16, P17)
+ROWS = (P0_05, P0_06, P0_07, P0_08, P1_09, P1_08, P0_12, P0_11)
+COLS = (P0_19, P0_20, P0_21, P0_22, P0_23, P0_24, P0_25, P0_26)
 
 
 COORDS = (
-    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
-    14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-    28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,  0, 40,
-    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,  0, 52,  0,
-    53, 55, 54,  0,  0, 56,  0,  0, 57, 58, 59, 60,  0,  0
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14,
+    28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41,
+    53, 54, 55, 56, 57, 58, 59, 60
 )
 
 
@@ -116,7 +116,7 @@ class Queue:
 
 
 class Keyboard:
-    def __init__(self, keymap=KEYMAP, rows=ROWS, cols=COLS, coords=COORDS, row2col=True):
+    def __init__(self, keymap=KEYMAP, rows=ROWS, cols=COLS, coords=COORDS, row2col=False):
         self.keymap = keymap
         self.rows = rows
         self.cols = cols
@@ -376,7 +376,7 @@ class Keyboard:
 
 def main():
     kbd = Keyboard()
-    kbd.pair_keys = {T3: (L1, RCTRL)}
+    # kbd.pair_keys = {T3: (L1, RCTRL)}
     kbd.run()
 
 

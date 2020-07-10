@@ -12,6 +12,7 @@ The Python keyboard works so well thanks to MicroPython and CircuitPython.
 
 ## Hand-wiring a keyboard
 Follow [the guide - hand-wiring-a-keyboard.md](hand-wiring-a-keyboard.md) to rapidly make a keyboard with 100 lines of Python code.
+
 ![](img/colorful-keycaps.jpg)
 
 ## From prototype to production <sup><kbd>in progress</kbd></sup>

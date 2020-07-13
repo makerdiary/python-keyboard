@@ -4,132 +4,27 @@ Python Keyboard
   中文 | [English][1]
 ------|--------------
 
-这是一个手焊的 USB 和蓝牙双模键盘，还是一个里面跑 Python 的键盘
+从手焊一个跑Python的USB蓝牙双模键盘，到设计一个跑Python键盘
 
 
 ![](img/python-inside-keyboard.png)
 
+
+## 自己手焊键盘
+
+如果想深入了解键盘，最好的方式是自己造一把，可以按照仓库中的 [hand-wiring-a-keyboard.md](hand-wiring-a-keyboard.md)，软硬兼施，手焊一个跑Python键盘。
+
 ![](img/colorful-keycaps.jpg)
 
+## 从原型到产品
 
-## 自己动手造键盘
-1.  [手焊键盘](hardware.md)
-2.  参考 [Pitaya Go 下载教程](https://wiki.makerdiary.com/pitaya-go/programming/) 更新 [CircuitPython 固件](circuitpython-5.3.0-for-pitaya-go.hex)，固件更新之后，Pitaya Go 会在电脑端模拟出一个名为 `CIRCUITPY` 的 U 盘和一个串口
-3.  下载两个 CircuitPython 库 - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID)，然后它们放在 `CIRCUITPY` U 盘的 `lib` 目录，U 盘内容结构，如下：
+跑Python的手焊键盘得到了不少反馈，很多人喜欢它，有的人质疑为什么要用Python。 开始只是觉得这很有趣而已，当投入更多时间完善和探索之后，越来越觉得Python可以给键盘带来很独特的非凡体验。 而手焊一个键盘对于很多人来说很难，于是决定设计一个跑Python的新键盘，让更多人能体验Python和键盘结合在一起的惊喜。
 
-    ```
-    CIRCUITPY
-    ├───code.py
-    └───lib
-        ├───adafruit_ble
-        └───adafruit_hid
-    ```
+跑Python的键盘，不仅是个键盘，也是一个U盘，键盘的Python代码则保存在U盘中，可以用任意文本编辑器修改Python代码，无需配置任何开发环境。 配置键盘的keymap，添加一个新的宏，或者实现一个新功能，变得非常简单——修改U盘中的Python文件，保存后，即刻运行生效。
 
-4.  把以下 Python 代码拷贝到 `code.py`，保存之后 `code.py` 会被重新加载运行，这时你就得到了一个 USB + 蓝牙的双模键盘
+更多详情见[M60键盘](https://python-keyboard.gitee.io/)。
 
-
-    ```python
-    import time
-    from board import *
-    import digitalio
-    import usb_hid
-
-    import adafruit_ble
-    from adafruit_ble.advertising import Advertisement
-    from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
-    from adafruit_ble.services.standard.hid import HIDService
-    from adafruit_hid.keyboard import Keyboard
-    from adafruit_hid.keycode import Keycode as _
-
-    ROWS = (P27, P13, P30, P20, P3)
-    COLS = (P26, P31, P29, P28, P5, P4, P24, P25, P23, P22, P14, P15, P16, P17)
-
-    KEYMAP = (_.ESCAPE, _.ONE, _.TWO, _.THREE, _.FOUR, _.FIVE, _.SIX, _.SEVEN, _.EIGHT, _.NINE, _.ZERO, _.MINUS, _.EQUALS, _.BACKSPACE,
-            _.TAB, _.Q, _.W, _.E, _.R, _.T, _.Y, _.U, _.I, _.O, _.P, _.LEFT_BRACKET, _.RIGHT_BRACKET, _.BACKSLASH,
-            _.CAPS_LOCK, _.A, _.S, _.D, _.F, _.G, _.H, _.J, _.K, _.L, _.SEMICOLON, _.QUOTE, None, _.ENTER,
-            _.LEFT_SHIFT, _.Z, _.X, _.C, _.V, _.B, _.N, _.M, _.COMMA, _.PERIOD, _.FORWARD_SLASH, None, _.RIGHT_SHIFT, None,
-            _.LEFT_CONTROL, _.LEFT_ALT, _.LEFT_GUI, None, None, _.SPACE, None, None, _.RIGHT_ALT, _.RIGHT_GUI, _.APPLICATION, _.RIGHT_CONTROL, None, None)
-
-    class Matrix:
-        def __init__(self, rows=ROWS, cols=COLS):
-            self.rows = []
-            for pin in rows:
-                io = digitalio.DigitalInOut(pin)
-                io.direction = digitalio.Direction.OUTPUT
-                io.drive_mode = digitalio.DriveMode.PUSH_PULL
-                io.value = 0
-                self.rows.append(io)
-            self.cols = []
-            for pin in cols:
-                io = digitalio.DigitalInOut(pin)
-                io.direction = digitalio.Direction.INPUT
-                io.pull = digitalio.Pull.DOWN
-                self.cols.append(io)
-            self.pressed_keys = []
-
-        def scan(self):
-            new_keys = []
-            pressed_keys = []
-            released_keys = self.pressed_keys
-            for r in range(len(self.rows)):
-                self.rows[r].value = 1
-                for c in range(len(self.cols)):
-                    if self.cols[c].value:
-                        key = r * len(self.cols) + c
-                        pressed_keys.append(key)
-                        if key in released_keys:
-                            released_keys.remove(key)
-                        else:
-                            new_keys.append(key)
-                self.rows[r].value = 0
-            self.pressed_keys = pressed_keys
-            return pressed_keys, released_keys, new_keys
-
-    def main():
-        hid = HIDService()
-        advertisement = ProvideServicesAdvertisement(hid)
-        advertisement.appearance = 961
-        ble = adafruit_ble.BLERadio()
-        if ble.connected:
-            for c in ble.connections:
-                c.disconnect()
-        ble.start_advertising(advertisement)
-        advertising = True
-        ble_keyboard = Keyboard(hid.devices)
-
-        matrix = Matrix()
-        usb_keyboard = Keyboard(usb_hid.devices)
-
-        while True:
-            pressed_keys, released_keys, new_keys = matrix.scan()
-            if released_keys:
-                released_keycodes = list(map(lambda i: KEYMAP[i], released_keys))
-                print('released keys {}'.format(released_keycodes))
-
-                usb_keyboard.release(*released_keycodes)
-                if ble.connected:
-                    advertising = False
-                    ble_keyboard.release(*released_keycodes)
-            if new_keys:
-                new_keycodes = list(map(lambda i: KEYMAP[i], new_keys))
-                print('new keys {}'.format(new_keycodes))
-                usb_keyboard.press(*new_keycodes)
-                if ble.connected:
-                    advertising = False
-                    ble_keyboard.press(*new_keycodes)
-
-            if not ble.connected and not advertising:
-                ble.start_advertising(advertisement)
-                advertising = True
-
-            time.sleep(0.001)
-
-    if __name__ == '__main__':
-        main()
-    ```
-
-    如果你的键盘矩阵连接到 Pitaya Go 的 IO 有所不同， 你需要要更改代码中 `ROWS` 和 `COLS`
-
+[![](https://gitee.com/makerdiary/python-keyboard/raw/master/img/m60.jpg)](https://python-keyboard.gitee.io/)
 
 ## 更进一步——让键盘更具生产力
 这是一个 60% 键盘，缺少了包括 F1~F12、 方向键、小键盘等键位。
@@ -149,7 +44,7 @@ Python Keyboard
 + <kbd>d</kbd> + <kbd>u</kbd> → <kbd>PgUp</kbd>
 + <kbd>d</kbd> + <kbd>n</kbd> → <kbd>PgDn</kbd>
 
-要实现这个功能，把 `keyboard.py` 和 `action_code.py` 复制到 `CIRCUITPY` U 盘中，然后将 `code.py` 修改为：
+要实现这个功能，把 `keyboard.py` 和 `action_code.py` 拷贝键盘的 U 盘中，然后将键盘的 `code.py` 修改为：
 
 ```python
 # code.py

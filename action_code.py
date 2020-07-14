@@ -509,6 +509,8 @@ def MODS(*args):
         mods |= MAP[m]
     return mods
 
+def mods_to_keycodes(mods):
+    return list(filter(lambda k: mods & (1 << (k & 0xF)), (LCTRL, LSHIFT, LALT, LGUI)))
 
 ACTION = lambda kind, param: (kind << 12) | param
 

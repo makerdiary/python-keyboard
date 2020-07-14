@@ -22,13 +22,15 @@ L2D = LAYER_TAP(2, D)
 L3 = LAYER_TAP(3)
 T3 = LAYER_TAP_TOGGLE(3)
 
+SCC = MODS_TAP(MODS(LCTRL), ';')
+
 
 KEYMAP = (
     # layer 0
     (
         ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
         TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
-        CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, ';', '"',    ENTER,
+        CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
         LSHIFT,Z,   X,   C,   V,   B,   N,   M, ',', '.', '/',        RSHIFT,
         LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
     ),
@@ -219,6 +221,7 @@ class Keyboard:
         advertisement = ProvideServicesAdvertisement(hid)
         advertisement.appearance = 961
         ble = adafruit_ble.BLERadio()
+        ble.name = 'Python Keyboard'
         if ble.connected:
             for c in ble.connections:
                 c.disconnect()
@@ -227,25 +230,25 @@ class Keyboard:
         ble_keyboard = _Keyboard(hid.devices)
         usb_keyboard = _Keyboard(usb_hid.devices)
 
-        def send(code):
-            usb_keyboard.press(code)
-            usb_keyboard.release(code)
+        def send(*code):
+            usb_keyboard.press(*code)
+            usb_keyboard.release(*code)
             if ble.connected:
                 ble.advertising = False
-                ble_keyboard.press(code)
-                ble_keyboard.release(code)
+                ble_keyboard.press(*code)
+                ble_keyboard.release(*code)
 
-        def press(code):
-            usb_keyboard.press(code)
+        def press(*code):
+            usb_keyboard.press(*code)
             if ble.connected:
                 ble.advertising = False
-                ble_keyboard.press(code)
+                ble_keyboard.press(*code)
 
-        def release(code):
-            usb_keyboard.release(code)
+        def release(*code):
+            usb_keyboard.release(*code)
             if ble.connected:
                 ble.advertising = False
-                ble_keyboard.release(code)
+                ble_keyboard.release(*code)
 
         self.setup()
         matrix = Matrix()
@@ -282,12 +285,33 @@ class Keyboard:
                 if event & 0x80 == 0:
                     action_code = self.action_code(key)
                     keys[key] = action_code
-                    print('{} \\ action_code = {}'.format(key, action_code))
+                    print('{} \\ action_code = {}'.format(key, hex(action_code)))
                     if action_code < 0xFF:
                         press(action_code)
                     else:
                         kind = action_code >> 12
-                        if kind == ACT_LAYER_TAP:
+                        kind = action_code >> 12
+                        if kind == ACT_MODS:
+                            mods = (action_code >> 8) & 0xF
+                            keycodes = mods_to_keycodes(mods)
+                            keycodes.append(action_code & 0xFF)
+                            press(*keycodes)
+                        elif kind == ACT_MODS_TAP:
+                            if matrix.length == 0:
+                                matrix.wait(matrix.pressed_t[key] + 500000000)
+                            if matrix.length > 0 and matrix[0] == (key | 0x80):
+                                print('press & release quickly')
+                                keycode = action_code & 0xFF
+                                keys[key] = keycode
+                                press(keycode)
+                                matrix.get()
+                                release(keycode)
+                            else:
+                                mods = (action_code >> 8) & 0xF
+                                keycodes = mods_to_keycodes(mods)
+                                print(keycodes)
+                                press(*keycodes)
+                        elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             mask = 1 << layer
                             keycode = action_code & 0xFF
@@ -298,6 +322,8 @@ class Keyboard:
                                     print('press & release quickly')
                                     keys[key] = keycode
                                     press(keycode)
+                                    matrix.get()
+                                    release(keycode)
                                 else:
                                     self.layer_mask |= mask
                             else:
@@ -315,7 +341,16 @@ class Keyboard:
                         release(action_code)
                     else:
                         kind = action_code >> 12
-                        if kind == ACT_LAYER_TAP:
+                        if kind == ACT_MODS:
+                            mods = (action_code >> 8) & 0xF
+                            keycodes = mods_to_keycodes(mods)
+                            keycodes.append(action_code & 0xFF)
+                            release(*keycodes)
+                        elif kind == ACT_MODS_TAP:
+                            mods = (action_code >> 8) & 0xF
+                            keycodes = mods_to_keycodes(mods)
+                            release(*keycodes)
+                        elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:

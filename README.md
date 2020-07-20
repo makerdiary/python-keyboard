@@ -73,6 +73,10 @@ with
 matrix = CMatrix()
 ```
 
+The module is included in the firmware `firmware/circuitpython-6.0.0-alpha.1-m60-20200720.uf2`.
+Make sure the firmware is used when using the C module. If you are interested, you can build it from [circuitpython/tree/m60](https://github.com/xiongyihui/circuitpython/tree/m60).
+
+
 ## Todo
 - [ ] add macro
 - [ ] add system keys and cosumer keys

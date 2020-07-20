@@ -510,7 +510,18 @@ def MODS(*args):
     return mods
 
 def mods_to_keycodes(mods):
-    return list(filter(lambda k: mods & (1 << (k & 0xF)), (LCTRL, LSHIFT, LALT, LGUI)))
+    # if mods & 0x10:
+    #     all_mods = (RCTRL, RSHIFT, RALT, RGUI)
+    # else:
+    #     all_mods = (LCTRL, LSHIFT, LALT, LGUI)
+    # return list(filter(lambda k: mods & (1 << (k & 0x3)), all_mods))
+
+    b = RCTRL if mods & 0x10 else LCTRL
+    o = []
+    for i in range(4):
+        if (mods >> i) & 1:
+            o.append(b + i)
+    return o
 
 ACTION = lambda kind, param: (kind << 12) | param
 

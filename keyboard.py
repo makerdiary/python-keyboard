@@ -12,6 +12,7 @@ from adafruit_ble.services.standard.hid import HIDService
 from adafruit_hid.keyboard import Keyboard as _Keyboard
 
 from action_code import *
+# from matrix import Matrix as CMatrix
 
 
 ___ = TRANSPARENT
@@ -22,7 +23,8 @@ L2D = LAYER_TAP(2, D)
 L3 = LAYER_TAP(3)
 T3 = LAYER_TAP_TOGGLE(3)
 
-SCC = MODS_TAP(MODS(LCTRL), ';')
+# Semicolon & Ctrl
+SCC = MODS_TAP(MODS(RCTRL), ';')
 
 
 KEYMAP = (
@@ -48,7 +50,7 @@ KEYMAP = (
     (
         '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
         ___, ___, ___, ___, ___, ___, ___,PGUP, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___,LEFT, UP,DOWN,RIGHT, ___, ___,      ___,
+        ___, ___, ___, ___, ___, ___,LEFT,DOWN, UP,RIGHT, ___, ___,      ___,
         ___, ___, ___, ___, ___, ___,PGDN, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
@@ -91,104 +93,125 @@ class Matrix:
     ROW2COL = False
 
     def __init__(self):
-        self.size = len(self.ROWS) * len(self.COLS)
-        self.queue = bytearray(self.size)
+        self.keys = len(self.ROWS) * len(self.COLS)
+        self.queue = bytearray(self.keys)
         self.head = 0
         self.tail = 0
         self.length = 0
 
-        self.rows_io = []                                # row as output
+        self.rows = []                                # row as output
         for pin in self.ROWS:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.OUTPUT
             io.drive_mode = digitalio.DriveMode.PUSH_PULL
             io.value = 0
-            self.rows_io.append(io)
+            self.rows.append(io)
 
-        self.cols_io = []                                # col as input
+        self.cols = []                                # col as input
         for pin in self.COLS:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.INPUT
             io.pull = digitalio.Pull.DOWN if self.ROW2COL else digitalio.Pull.UP
-            self.cols_io.append(io)
+            self.cols.append(io)
 
         # row selected value depends on diodes' direction
-        self.selected_value = bool(self.ROW2COL)
-        self.scan_time = 0
-        self.pressed_mask = 0
-        self.pressed_count = 0
-        self.pressed_t = [0] * self.size
-        self.released_t = [0] * self.size
+        self.pressed = bool(self.ROW2COL)
+        self.t0 = [0] * self.keys                   # key pressed time
+        self.t1 = [0] * self.keys                   # key released time
+        self.mask = 0
+        self.count = 0
 
     def scan(self):
-        self.scan_time = time.monotonic_ns()
+        t = time.monotonic_ns()
 
         # use local variables to speed up
-        selected_value = self.selected_value
-        last_pressed_mask = self.pressed_mask
-        cols_io = self.cols_io
+        pressed = self.pressed
+        last_mask = self.mask
+        cols = self.cols
 
-        pressed_mask = 0
-        n_pressed = 0
+        mask = 0
+        count = 0
         key_index = -1
-        for row_io in self.rows_io:
-            row_io.value = selected_value           # select row
-            for col_io in cols_io:
+        for row in self.rows:
+            row.value = pressed           # select row
+            for col in cols:
                 key_index += 1
-                if col_io.value == selected_value:
+                if col.value == pressed:
                     key_mask = 1 << key_index
-                    if not (last_pressed_mask & key_mask):
-                        if self.scan_time - self.released_t[key_index] < 20000000:
+                    if not (last_mask & key_mask):
+                        if t - self.t1[key_index] < 20000000:
                             print('debonce')
                             continue
                             
-                        self.pressed_t[key_index] = self.scan_time
+                        self.t0[key_index] = t
                         self.put(key_index)
                         
-                    pressed_mask |= key_mask
-                    n_pressed += 1
-                elif last_pressed_mask and (last_pressed_mask & (1 << key_index)):
-                    if self.scan_time - self.pressed_t[key_index] < 20000000:
+                    mask |= key_mask
+                    count += 1
+                elif last_mask and (last_mask & (1 << key_index)):
+                    if t - self.t0[key_index] < 20000000:
                         print('debonce')
-                        pressed_mask |= 1 << key_index
+                        mask |= 1 << key_index
                         continue
                         
-                    self.released_t[key_index] = self.scan_time
+                    self.t1[key_index] = t
                     self.put(0x80 | key_index)
 
-            row_io.value = not selected_value
-        self.pressed_mask = pressed_mask
-        self.pressed_count = n_pressed
+            row.value = not pressed
+        self.mask = mask
+        self.count = count
         
         return self.length
 
-    def wait(self, end_time):
-        n_events = self.length 
-        while True:
-            n = self.scan()
-            if n > n_events or self.scan_time > end_time:
-                return n
+    def wait(self, timeout=0):
+        last = self.length 
+        if timeout:
+            end_time = time.monotonic_ns() + timeout * 1000000
+            while True:
+                n = self.scan()
+                if n > last or time.monotonic_ns() > end_time:
+                    return n
+        else:
+            while True:
+                n = self.scan()
+                if n > last:
+                    return n
 
     def put(self, data):
         self.queue[self.head] = data
         self.head += 1
-        if self.head >= self.size:
+        if self.head >= self.keys:
             self.head = 0
         self.length += 1
 
     def get(self):
         data = self.queue[self.tail]
         self.tail += 1
-        if self.tail >= self.size:
+        if self.tail >= self.keys:
             self.tail = 0
         self.length -= 1
         return data
 
+    def view(self, n):
+        return self.queue[(self.tail + n) % self.keys]
+
     def __getitem__(self, n):
-        return self.queue[(self.tail + n) % self.size]
+        return self.queue[(self.tail + n) % self.keys]
 
     def __len__(self):
         return self.length
+
+    def get_keydown_time(self, key):
+        return self.t0[key]
+
+    def get_keyup_time(self, key):
+        return self.t1[key]
+
+    def time(self):
+        return time.monotonic_ns()
+
+    def ms(self, t):
+        return t // 1000000
 
 class Keyboard:
     def __init__(self, keymap=KEYMAP, coords=COORDS):
@@ -252,29 +275,28 @@ class Keyboard:
 
         self.setup()
         matrix = Matrix()
-        keys = [0] * matrix.size
+        # matrix = CMatrix()      # keyboard matrix C module
+        keys = [0] * matrix.keys
         while True:
-            n_events = matrix.scan()
-            if n_events == 0:
-                # print((time.monotonic_ns() - matrix.scan_time) // 1000000)
+            n = matrix.scan()
+            if n == 0:
                 continue
 
             # detecting pair keys
-            if n_events == 1 and matrix[0] in self.pair_keys:
-                    n_events = matrix.wait(matrix.scan_time + 10000000)
+            if n == 1:
+                key = matrix.view(0)
+                if key < 0x80 and key in self.pair_keys:
+                    n = matrix.wait(10 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
 
-            if n_events >= 2:
-                pair = {matrix[0], matrix[1]}
+            if n >= 2:
+                pair = {matrix.view(0), matrix.view(1)}
                 if pair in self.pairs:
                     pair_index = self.pairs.index(pair)
                     key1 = matrix.get()
                     key2 = matrix.get()
                         
-                    dt = matrix.pressed_t[key2] - matrix.pressed_t[key1]
-                    print('pair keys {} {}, dt = {}'.format(
-                        pair_index,
-                        pair,
-                        dt // 1000000))
+                    dt = matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
+                    print('pair keys {} {}, dt = {}'.format(pair_index, pair, dt))
                     # todo
                     for c in b'pair keys':
                         send(ASCII_TO_KEYCODE[c])
@@ -285,21 +307,23 @@ class Keyboard:
                 if event & 0x80 == 0:
                     action_code = self.action_code(key)
                     keys[key] = action_code
-                    print('{} \\ action_code = {}'.format(key, hex(action_code)))
                     if action_code < 0xFF:
                         press(action_code)
+                        dt = matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+                        print('{} \\ {} latency {}'.format(key, hex(action_code), dt))
                     else:
                         kind = action_code >> 12
-                        kind = action_code >> 12
-                        if kind == ACT_MODS:
-                            mods = (action_code >> 8) & 0xF
+                        if kind < ACT_MODS_TAP:
+                            # MODS
+                            mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             keycodes.append(action_code & 0xFF)
                             press(*keycodes)
-                        elif kind == ACT_MODS_TAP:
-                            if matrix.length == 0:
-                                matrix.wait(matrix.pressed_t[key] + 500000000)
-                            if matrix.length > 0 and matrix[0] == (key | 0x80):
+                        elif kind < ACT_USAGE:
+                            # MODS_TAP
+                            if len(matrix) == 0:
+                                matrix.wait(500 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+                            if len(matrix) > 0 and matrix.view(0) == (key | 0x80):
                                 print('press & release quickly')
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
@@ -307,18 +331,17 @@ class Keyboard:
                                 matrix.get()
                                 release(keycode)
                             else:
-                                mods = (action_code >> 8) & 0xF
+                                mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
-                                print(keycodes)
                                 press(*keycodes)
                         elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             mask = 1 << layer
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:
-                                if matrix.length == 0:
-                                    matrix.wait(matrix.pressed_t[key] + 500000000)
-                                if matrix.length > 0 and matrix[0] == (key | 0x80):
+                                if len(matrix) == 0:
+                                    matrix.wait(500 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+                                if len(matrix) > 0 and matrix.view(0) == (key | 0x80):
                                     print('press & release quickly')
                                     keys[key] = keycode
                                     press(keycode)
@@ -333,21 +356,24 @@ class Keyboard:
                             print('layers {}'.format(self.layer_mask))
                         elif action_code == BOOTLOADER:
                             reset_into_bootloader()
+                    
+                        dt = matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+                        print('{} \\ {} latency {}'.format(key, hex(action_code), dt))
                 else:
                     action_code = keys[key]
-                    dt = (matrix.scan_time - matrix.pressed_t[key]) // 1000000
-                    print('{} / action_code = {}, dt = {}'.format(key, action_code, dt))
                     if action_code < 0xFF:
                         release(action_code)
                     else:
                         kind = action_code >> 12
-                        if kind == ACT_MODS:
-                            mods = (action_code >> 8) & 0xF
+                        if kind < ACT_MODS_TAP:
+                            # MODS
+                            mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             keycodes.append(action_code & 0xFF)
                             release(*keycodes)
-                        elif kind == ACT_MODS_TAP:
-                            mods = (action_code >> 8) & 0xF
+                        elif kind < ACT_USAGE:
+                            # MODS_TAP
+                            mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             release(*keycodes)
                         elif kind == ACT_LAYER_TAP:
@@ -356,14 +382,13 @@ class Keyboard:
                             if keycode != OP_TAP_TOGGLE:
                                 self.layer_mask &= ~(1 << layer)
                                 print('layers {}'.format(self.layer_mask))
-                            # if dt < 500 and keycode:
-                                # send(keycode)
+                    
+                    dt = matrix.ms(matrix.time() - matrix.get_keyup_time(key))
+                    print('{} / {} latency {}'.format(key, hex(action_code), dt))
 
             if not ble.connected and not ble.advertising:
                 ble.start_advertising(advertisement)
                 ble.advertising = True
-
-            print((time.monotonic_ns() - matrix.scan_time) // 1000000)
 
 
 def main():

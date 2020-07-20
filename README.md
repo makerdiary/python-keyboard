@@ -55,14 +55,29 @@ Simultaneously pressing two keys (interval less than 25ms) activates an alternat
 
 
 ### Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
-WIP - Holding <kbd>;</kbd> down outputs <kbd>Ctrl</kbd>
+Use <kbd>;</kbd> as a MODS_TAP key, taping <kbd>;</kbd> outputs <kbd>;</kbd>, holding <kbd>;</kbd> down outputs <kbd>Ctrl</kbd>.
+
+### Optimizing with C modules<sup><kbd>in progress</kbd></sup>
+
+A C module `matrix` of keyboard matrix is written to reduce latency and improve power efficiency. To use it, import `CMatrix` into `keyboard.py`:
+
+```
+from matrix import Matrix as CMatrix
+```
+then replace 
+```
+matrix = Matrix()
+```
+with
+```
+matrix = CMatrix()
+```
 
 ## Todo
-+ <kbd>;</kbd> as <kbd>Ctrl</kbd>
-+ add macro
-+ add system keys and cosumer keys
-+ add mouse keys
-+ reduce latency
+- [ ] add macro
+- [ ] add system keys and cosumer keys
+- [ ] add mouse keys
+- [ ] add RGB backlight
 
 
 ## Credits

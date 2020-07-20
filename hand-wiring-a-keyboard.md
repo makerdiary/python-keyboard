@@ -3,9 +3,57 @@ Hand-wiring a keyboard
 
 ![](img/python-inside-keyboard.png)
 
-1.  [Hand-wire the keyboard](hardware.md)
-2.  Follow [the guide - How to Program Pitaya Go](https://wiki.makerdiary.com/pitaya-go/programming/) to flash [CircuitPython firmware](circuitpython-5.3.0-for-pitaya-go.hex)
-3.  Download two CircuitPython libraries - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID) and put them into the `lib` directory of the USB drive named CIRCUITPY.
+## Build Hardware
+
+
+### Materials
+
++ 0.8mm brass wire
++ 61+ mechanical switches
++ keybaord plate
++ plate mount stabilizers
++ 61+ diodes for anti-ghost
++ [Pitaya Go](https://github.com/makerdiary/pitaya-go)
+
+### Tools
+
++ soldering iron
++ solder alloy
++ tweezer
++ multimeter
+
+1.  Install Stabilizers
+
+    At first, we should install stabilizers into the keyboard plate. To make the keyboard less noisy, we can lubricate the stabilizers with grease.
+
+    ![](img/grease.jpg)
+
+2.  Mount Switches
+
+    Mount the mechanical switches to the plate.
+
+    ![](img/switch.jpg)
+
+3.  Solder Keyboard Matrix
+
+    The keyboard matrix has 5 rows and 14 columns, each switch has two pins to connect to a row and a column. First, use a brass wire as a row and solder it with a diode. Second, solder the diode with a switch's row pin. After soldering all rows, we put something as a spacer on top of the row wires, and then solder the column wires with the column pins of these switches. By removing the spacer, the rows and columns are crossed in 3D space and are avoid to be shorted.  We'd better use a muiltmeter to check if rows and columns are shorted and each diode's direction is correct.
+
+    ![](img/rows2.jpg)
+
+    ![](img/rows.jpg)
+
+    ![](img/rows-cols.jpg)
+
+4.  Connect Keyboard Matrix to Pitaya Go
+
+    Connect each row and each column to an IO of the board Pitaya Go. When ardware is ready now, check if rows and columns are shorted before power on.
+
+    ![](img/pitaya-go.jpg)
+
+## Setup Python
+
+1.  Follow [the guide - How to Program Pitaya Go](https://wiki.makerdiary.com/pitaya-go/programming/) to flash [CircuitPython firmware](firmware/circuitpython-5.3.0-for-pitaya-go.hex)
+2.  Download two CircuitPython libraries - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID) and put them into the `lib` directory of the USB drive named CIRCUITPY.
 
     ```
     CIRCUITPY
@@ -15,7 +63,7 @@ Hand-wiring a keyboard
         └───adafruit_hid
     ```
 
-4.  Copy the Python code to `code.py`. When `code.py` is reloaded, you will get a keyboard with USB & Bluetooth
+3.  Copy the Python code to `code.py`. When `code.py` is reloaded, you will get a keyboard with USB & Bluetooth
 
 
     ```python
@@ -112,7 +160,7 @@ Hand-wiring a keyboard
                 ble.start_advertising(advertisement)
                 advertising = True
 
-            time.sleep(0.001)
+            # time.sleep(0.001)
 
     if __name__ == '__main__':
         main()

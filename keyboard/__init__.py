@@ -52,6 +52,12 @@ KEYMAP = (
     ),
 )
 
+@micropython.asm_thumb
+def mem(r0):
+    ldr(r0, [r0, 0])
+
+def usb_is_connected():
+    return mem(0x40000438) == 0x3
 
 def reset_into_bootloader():
     import microcontroller
@@ -108,30 +114,28 @@ class Keyboard:
         ble.start_advertising(advertisement)
         ble.advertising = True
         ble_keyboard = _Keyboard(hid.devices)
-        usb_keyboard = _Keyboard(usb_hid.devices)
-
-        runtime = supervisor.runtime
+        usb_keyboard = _Keyboard(usb_hid.devices) if usb_is_connected() else None
 
         def send(*code):
-            if runtime.serial_connected:
+            if usb_keyboard:
                 usb_keyboard.press(*code)
                 usb_keyboard.release(*code)
-            elif ble.connected:
+            if ble.connected:
                 ble.advertising = False
                 ble_keyboard.press(*code)
                 ble_keyboard.release(*code)
 
         def press(*code):
-            if runtime.serial_connected:
+            if usb_keyboard:
                 usb_keyboard.press(*code)
-            elif ble.connected:
+            if ble.connected:
                 ble.advertising = False
                 ble_keyboard.press(*code)
 
         def release(*code):
-            if runtime.serial_connected:
+            if usb_keyboard:
                 usb_keyboard.release(*code)
-            elif ble.connected:
+            if ble.connected:
                 ble.advertising = False
                 ble_keyboard.release(*code)
 

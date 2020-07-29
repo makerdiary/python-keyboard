@@ -161,6 +161,8 @@ class Keyboard:
             if self.ble.connected:
                 self.ble.advertising = False
                 self.ble_hid.release(*keycodes)
+                # for c in self.ble.connections:
+                #     print('ble connect interval {}'.format(c.connection_interval))
         except Exception:
             pass
 
@@ -217,15 +219,17 @@ class Keyboard:
                             self.press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
-                            if len(matrix) == 0:
-                                matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
-                            if len(matrix) > 0 and matrix.view(0) == (key | 0x80):
-                                log('press & release quickly')
-                                keycode = action_code & 0xFF
-                                keys[key] = keycode
-                                self.press(keycode)
-                                matrix.get()
-                                self.release(keycode)
+                            n = len(matrix)
+                            if n == 0:
+                                n = matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
+                            target = key | 0x80
+                            for i in range(n):
+                                if target == matrix.view(i):
+                                    log('TAP')
+                                    keycode = action_code & 0xFF
+                                    keys[key] = keycode
+                                    self.press(keycode)
+                                    break
                             else:
                                 mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
@@ -235,14 +239,16 @@ class Keyboard:
                             mask = 1 << layer
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:
-                                if len(matrix) == 0:
-                                    matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
-                                if len(matrix) > 0 and matrix.view(0) == (key | 0x80):
-                                    log('press & release quickly')
-                                    keys[key] = keycode
-                                    self.press(keycode)
-                                    matrix.get()
-                                    self.release(keycode)
+                                n = len(matrix)
+                                if n == 0:
+                                    n = matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
+                                target = key | 0x80
+                                for i in range(n):
+                                    if target == matrix.view(i):
+                                        log('TAP')
+                                        keys[key] = keycode
+                                        self.press(keycode)
+                                        break
                                 else:
                                     self.layer_mask |= mask
                             else:
@@ -254,7 +260,7 @@ class Keyboard:
                             reset_into_bootloader()
 
                         dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                        log('{} \\ {} latency {}'.format(key, hex(action_code), dt))
+                        log('{} \\ {} latency {}'.format(key, hex(keys[key]), dt))
                 else:
                     action_code = keys[key]
                     if action_code < 0xFF:

@@ -8,8 +8,8 @@ import adafruit_ble
 from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
-from adafruit_hid.keyboard import Keyboard as _Keyboard
 
+from .hid import HID
 from .model import Matrix, COORDS
 from .action_code import *
 
@@ -76,6 +76,33 @@ class Keyboard:
         self.verbose = verbose
         self.pair_keys = set()
         self.layer_mask = 1
+        self.matrix = None
+
+        ble_hid = HIDService()
+        advertisement = ProvideServicesAdvertisement(ble_hid)
+        advertisement.appearance = 961
+        advertisement.complete_name = 'Python Keyboard'
+        ble = adafruit_ble.BLERadio()
+        ble.name = 'Python Keyboard'
+        if ble.connected:
+            for c in ble.connections:
+                c.disconnect()
+        ble.start_advertising(advertisement)
+        ble.advertising = True
+        self.ble = ble
+        self.advertisement = advertisement
+        self.ble_hid = HID(ble_hid.devices)
+        try:
+            self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
+        except Exception:
+            self.usb_hid = None
+
+    def hook(self):
+        if usb_is_connected() and not self.usb_hid:
+            try:
+                self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
+            except Exception:
+                self.usb_hid = None
 
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
@@ -100,49 +127,51 @@ class Keyboard:
         if self.verbose:
             print(*args)
 
+
+    def send(self, *keycodes):
+        self.press(*keycodes)
+        self.release(*keycodes)
+
+    def press(self, *keycodes):
+        try:
+            if usb_is_connected():
+                if not self.usb_hid:
+                    self.usb_hid = HID(usb_hid.devices)
+                self.usb_hid.press(*keycodes)
+        except Exception:
+            pass
+
+        try:
+            if self.ble.connected:
+                self.ble.advertising = False
+                self.ble_hid.press(*keycodes)
+        except Exception:
+            pass
+
+    def release(self, *keycodes):
+        try:
+            if usb_is_connected():
+                if not self.usb_hid:
+                    self.usb_hid = HID(usb_hid.devices)
+                self.usb_hid.release(*keycodes)
+        except Exception:
+            pass
+
+        try:
+            if self.ble.connected:
+                self.ble.advertising = False
+                self.ble_hid.release(*keycodes)
+        except Exception:
+            pass
+
     def run(self):
-        log = self.log
-
-        hid = HIDService()
-        advertisement = ProvideServicesAdvertisement(hid)
-        advertisement.appearance = 961
-        ble = adafruit_ble.BLERadio()
-        ble.name = 'Python Keyboard'
-        if ble.connected:
-            for c in ble.connections:
-                c.disconnect()
-        ble.start_advertising(advertisement)
-        ble.advertising = True
-        ble_keyboard = _Keyboard(hid.devices)
-        usb_keyboard = _Keyboard(usb_hid.devices) if usb_is_connected() else None
-
-        def send(*code):
-            if usb_keyboard:
-                usb_keyboard.press(*code)
-                usb_keyboard.release(*code)
-            if ble.connected:
-                ble.advertising = False
-                ble_keyboard.press(*code)
-                ble_keyboard.release(*code)
-
-        def press(*code):
-            if usb_keyboard:
-                usb_keyboard.press(*code)
-            if ble.connected:
-                ble.advertising = False
-                ble_keyboard.press(*code)
-
-        def release(*code):
-            if usb_keyboard:
-                usb_keyboard.release(*code)
-            if ble.connected:
-                ble.advertising = False
-                ble_keyboard.release(*code)
-
-        self.setup()
-        matrix = self.Matrix()
-        ms = matrix.ms
+        if not self.matrix:
+            self.matrix = self.Matrix()
+            self.setup()
+        matrix = self.matrix
         keys = [0] * matrix.keys
+        ms = matrix.ms
+        log = self.log
         while True:
             n = matrix.wait(10)
             if n == 0:
@@ -165,7 +194,7 @@ class Keyboard:
                     log('pair keys {} {}, dt = {}'.format(pair_index, pair, dt))
                     # todo
                     for c in b'pair keys':
-                        send(ASCII_TO_KEYCODE[c])
+                        self.send(ASCII_TO_KEYCODE[c])
 
             while len(matrix):
                 event = matrix.get()
@@ -174,7 +203,7 @@ class Keyboard:
                     action_code = self.action_code(key)
                     keys[key] = action_code
                     if action_code < 0xFF:
-                        press(action_code)
+                        self.press(action_code)
                         if self.verbose:
                             dt = ms(matrix.time() - matrix.get_keydown_time(key))
                             log('{} \\ {} latency {}'.format(key, hex(action_code), dt))
@@ -185,7 +214,7 @@ class Keyboard:
                             mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             keycodes.append(action_code & 0xFF)
-                            press(*keycodes)
+                            self.press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
                             if len(matrix) == 0:
@@ -194,13 +223,13 @@ class Keyboard:
                                 log('press & release quickly')
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
-                                press(keycode)
+                                self.press(keycode)
                                 matrix.get()
-                                release(keycode)
+                                self.release(keycode)
                             else:
                                 mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
-                                press(*keycodes)
+                                self.press(*keycodes)
                         elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             mask = 1 << layer
@@ -211,9 +240,9 @@ class Keyboard:
                                 if len(matrix) > 0 and matrix.view(0) == (key | 0x80):
                                     log('press & release quickly')
                                     keys[key] = keycode
-                                    press(keycode)
+                                    self.press(keycode)
                                     matrix.get()
-                                    release(keycode)
+                                    self.release(keycode)
                                 else:
                                     self.layer_mask |= mask
                             else:
@@ -229,7 +258,7 @@ class Keyboard:
                 else:
                     action_code = keys[key]
                     if action_code < 0xFF:
-                        release(action_code)
+                        self.release(action_code)
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -237,12 +266,12 @@ class Keyboard:
                             mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             keycodes.append(action_code & 0xFF)
-                            release(*keycodes)
+                            self.release(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
                             mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
-                            release(*keycodes)
+                            self.release(*keycodes)
                         elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             keycode = action_code & 0xFF
@@ -254,6 +283,6 @@ class Keyboard:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))
                         log('{} / {} latency {}'.format(key, hex(action_code), dt))
 
-            if not ble.connected and not ble.advertising:
-                ble.start_advertising(advertisement)
-                ble.advertising = True
+            if not self.ble.connected and not self.ble.advertising:
+                self.ble.start_advertising(self.advertisement)
+                self.ble.advertising = True

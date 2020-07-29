@@ -116,8 +116,6 @@ keyboard.keymap = (
 keyboard.run()
 ```
 
-
-
 ### Using Pair-keys
 Simultaneously pressing two keys (interval less than 25ms) activates an alternate function.
 
@@ -125,7 +123,7 @@ Simultaneously pressing two keys (interval less than 25ms) activates an alternat
 
 A C module `matrix` of keyboard matrix is written to reduce latency and improve power efficiency. The module has the same function as [`keyboard/matrix.py`](keyboard/matrix.py).
 
-The module is included in the firmware `firmware/circuitpython-6.0.0-alpha.1-m60-20200728.uf2`. If you are interested, you can build it from [circuitpython/tree/m60](https://github.com/xiongyihui/circuitpython/tree/m60).
+The module is included in the latest firmware in `firmware/`. If you are interested, you can build it from [circuitpython/tree/m60](https://github.com/xiongyihui/circuitpython/tree/m60).
 
 
 ## Todo
@@ -138,7 +136,6 @@ The module is included in the firmware `firmware/circuitpython-6.0.0-alpha.1-m60
 ## Credits
 + [MicroPython](https://github.com/micropython/micropython)
 + [CircuitPython](https://github.com/adafruit/circuitpython)
-
 
 
 [1]: https://gitee.com/makerdiary/python-keyboard

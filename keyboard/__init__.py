@@ -66,6 +66,22 @@ def reset_into_bootloader():
     microcontroller.reset()
 
 
+def is_tapped(matrix, key):
+    n = len(matrix)
+    if n == 0:
+        n = matrix.wait(500 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+    target = key | 0x80
+    if n == 1:
+        if target == matrix.view(0):
+            return True
+        else:
+            n = matrix.wait(200 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+    if n == 2 and target == matrix.view(1):
+        return True
+
+    return False
+
+
 class Keyboard:
     Matrix = Matrix
     coords = COORDS
@@ -219,17 +235,11 @@ class Keyboard:
                             self.press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
-                            n = len(matrix)
-                            if n == 0:
-                                n = matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
-                            target = key | 0x80
-                            for i in range(n):
-                                if target == matrix.view(i):
-                                    log('TAP')
-                                    keycode = action_code & 0xFF
-                                    keys[key] = keycode
-                                    self.press(keycode)
-                                    break
+                            if is_tapped(matrix, key):
+                                log('TAP')
+                                keycode = action_code & 0xFF
+                                keys[key] = keycode
+                                self.press(keycode)
                             else:
                                 mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
@@ -237,23 +247,17 @@ class Keyboard:
                         elif kind == ACT_LAYER_TAP:
                             layer = ((action_code >> 8) & 0xF)
                             mask = 1 << layer
-                            keycode = action_code & 0xFF
-                            if keycode != OP_TAP_TOGGLE:
-                                n = len(matrix)
-                                if n == 0:
-                                    n = matrix.wait(500 - ms(matrix.time() - matrix.get_keydown_time(key)))
-                                target = key | 0x80
-                                for i in range(n):
-                                    if target == matrix.view(i):
-                                        log('TAP')
-                                        keys[key] = keycode
-                                        self.press(keycode)
-                                        break
+                            if is_tapped(matrix, key):
+                                log('TAP')
+                                keycode = action_code & 0xFF
+                                if keycode != OP_TAP_TOGGLE:
+                                    keys[key] = keycode
+                                    self.press(keycode)
                                 else:
-                                    self.layer_mask |= mask
+                                    log('toggle {}'.format(self.layer_mask))
+                                    self.layer_mask = (self.layer_mask & ~mask) | (mask & ~self.layer_mask)
                             else:
-                                log('toggle {}'.format(self.layer_mask))
-                                self.layer_mask = (self.layer_mask & ~mask) | (mask & ~self.layer_mask)
+                                self.layer_mask |= mask
 
                             log('layers {}'.format(self.layer_mask))
                         elif action_code == BOOTLOADER:

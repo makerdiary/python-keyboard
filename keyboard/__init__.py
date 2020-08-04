@@ -104,7 +104,6 @@ class Keyboard:
             for c in ble.connections:
                 c.disconnect()
         ble.start_advertising(advertisement)
-        ble.advertising = True
         self.ble = ble
         self.advertisement = advertisement
         self.ble_hid = HID(ble_hid.devices)
@@ -143,7 +142,6 @@ class Keyboard:
         if self.verbose:
             print(*args)
 
-
     def send(self, *keycodes):
         self.press(*keycodes)
         self.release(*keycodes)
@@ -159,23 +157,21 @@ class Keyboard:
 
         try:
             if self.ble.connected:
-                self.ble.advertising = False
                 self.ble_hid.press(*keycodes)
+            elif not self.ble._adapter.advertising:
+                self.ble.start_advertising(self.advertisement)
         except Exception:
             pass
 
     def release(self, *keycodes):
         try:
             if usb_is_connected():
-                if not self.usb_hid:
-                    self.usb_hid = HID(usb_hid.devices)
                 self.usb_hid.release(*keycodes)
         except Exception:
             pass
 
         try:
             if self.ble.connected:
-                self.ble.advertising = False
                 self.ble_hid.release(*keycodes)
                 # for c in self.ble.connections:
                 #     print('ble connect interval {}'.format(c.connection_interval))
@@ -293,6 +289,3 @@ class Keyboard:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))
                         log('{} / {} latency {}'.format(key, hex(action_code), dt))
 
-            if not self.ble.connected and not self.ble.advertising:
-                self.ble.start_advertising(self.advertisement)
-                self.ble.advertising = True

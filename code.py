@@ -41,4 +41,14 @@ keyboard.keymap = (
     ),
 )
 
+
+def pairs_handler(dev, n):
+    dev.send('You just trigger No.{} pair keys'.format(n))
+
+
+keyboard.pairs_handler = pairs_handler
+
+# Pairs: J & K
+keyboard.pairs = [{35, 36}]
+
 keyboard.run()

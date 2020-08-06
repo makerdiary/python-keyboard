@@ -82,6 +82,46 @@ def is_tapped(matrix, key):
     return False
 
 
+class Device:
+    def __init__(self, kbd):
+        self.kbd = kbd
+
+    def send(self, data):
+        if type(data) is str:
+            for c in data:
+                code = get_action_code(c)
+                self.kbd.send(code)
+        elif type(data) is int:
+            code = get_action_code(c)
+            self.kbd.send(code)
+        else:
+            print('Invalid data')
+
+    def press(self, data):
+        if type(data) is str:
+            for c in data:
+                code = get_action_code(c)
+                self.kbd.press(code)
+        elif type(data) is int:
+            code = get_action_code(c)
+            self.kbd.press(code)
+        else:
+            print('Invalid data')
+
+    def release(self, data):
+        if type(data) is str:
+            for c in data:
+                code = get_action_code(c)
+                self.kbd.release(code)
+        elif type(data) is int:
+            code = get_action_code(c)
+            self.kbd.release(code)
+        else:
+            print('Invalid data')
+
+    def wait(self):
+        return self.kbd.matrix.wait()
+
 class Keyboard:
     Matrix = Matrix
     coords = COORDS
@@ -90,6 +130,7 @@ class Keyboard:
         self.keymap = KEYMAP
         self.pairs = pairs
         self.verbose = verbose
+        self.pairs_handler = None
         self.pair_keys = set()
         self.layer_mask = 1
         self.matrix = None
@@ -120,6 +161,9 @@ class Keyboard:
                 self.usb_hid = None
 
     def setup(self):
+        if not self.matrix:
+            self.matrix = self.Matrix()
+
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
         self.actonmap = tuple(convert(layer) for layer in self.keymap)
 
@@ -152,40 +196,39 @@ class Keyboard:
                 if not self.usb_hid:
                     self.usb_hid = HID(usb_hid.devices)
                 self.usb_hid.press(*keycodes)
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
 
         try:
             if self.ble.connected:
                 self.ble_hid.press(*keycodes)
             elif not self.ble._adapter.advertising:
                 self.ble.start_advertising(self.advertisement)
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
 
     def release(self, *keycodes):
         try:
             if usb_is_connected():
                 self.usb_hid.release(*keycodes)
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
 
         try:
             if self.ble.connected:
                 self.ble_hid.release(*keycodes)
                 # for c in self.ble.connections:
                 #     print('ble connect interval {}'.format(c.connection_interval))
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
 
     def run(self):
-        if not self.matrix:
-            self.matrix = self.Matrix()
-            self.setup()
+        self.setup()
+        log = self.log
         matrix = self.matrix
+        dev = Device(self)
         keys = [0] * matrix.keys
         ms = matrix.ms
-        log = self.log
         while True:
             n = matrix.wait(10)
             if n == 0:
@@ -206,9 +249,12 @@ class Keyboard:
 
                     dt = ms(matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1))
                     log('pair keys {} {}, dt = {}'.format(pair_index, pair, dt))
-                    # todo
-                    for c in b'pair keys':
-                        self.send(ASCII_TO_KEYCODE[c])
+                    if callable(self.pairs_handler):
+                        try:
+                            self.pairs_handler(dev, pair_index)
+                        except Exception as e:
+                            print(e)
+                            pass
 
             while len(matrix):
                 event = matrix.get()

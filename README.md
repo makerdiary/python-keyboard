@@ -119,6 +119,32 @@ keyboard.run()
 ### Using Pair-keys
 Simultaneously pressing two keys (interval less than 25ms) activates an alternate function.
 
+```python
+def pairs_handler(dev, n):
+    dev.send('You just trigger No.{} pair keys'.format(n))
+
+keyboard.pairs_handler = pairs_handler
+
+# Map key to number
+#
+# ESC   1   2   3   4   5   6   7   8   9   0   -   =  BACKSPACE
+# TAB   Q   W   E   R   T   Y   U   I   O   P   [   ]   |
+# CAPS  A   S   D   F   G   H   J   K   L   ;   "      ENTER
+#LSHIFT Z   X   C   V   B   N   M   ,   .   /         RSHIFT
+# LCTRL LGUI LALT          SPACE         RALT MENU  L1 RCTRL
+#
+#   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+#   27,26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14,
+#   28,29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,     40,
+#   52,51, 50, 49, 48, 47, 46, 45, 44, 43, 42,         41,
+#   53,  54,  55,            56,           57, 58, 59, 60
+
+# Pairs: J & K
+keyboard.pairs = [{35, 36}]
+
+keyboard.run()
+```
+
 ### Optimizing with C modules<sup><kbd>in progress</kbd></sup>
 
 A C module `matrix` of keyboard matrix is written to reduce latency and improve power efficiency. The module has the same function as [`keyboard/matrix.py`](keyboard/matrix.py).

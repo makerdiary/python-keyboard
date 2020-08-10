@@ -95,6 +95,8 @@ def is_tapped(matrix, key):
 class Device:
     def __init__(self, kbd):
         self.kbd = kbd
+        self.send_consumer = kbd.send_consumer
+        self.wait = kbd.matrix.wait
 
     def send(self, data):
         if type(data) is str:
@@ -129,9 +131,6 @@ class Device:
         else:
             print('Invalid data')
 
-    def wait(self):
-        return self.kbd.matrix.wait()
-
 class Keyboard:
     Matrix = Matrix
     coords = COORDS
@@ -142,6 +141,7 @@ class Keyboard:
         self.verbose = verbose
         self.pairs_handler = None
         self.pair_keys = set()
+        self.macro_handler = None
         self.layer_mask = 1
         self.matrix = None
         self.unique_array = microcontroller.cpu.uid * 2
@@ -261,6 +261,19 @@ class Keyboard:
         except Exception as e:
             print(e)
 
+    def send_consumer(self, keycode):
+        try:
+            if usb_is_connected():
+                self.usb_hid.send_consumer(keycode)
+        except Exception as e:
+            print(e)
+
+        try:
+            if self.ble.connected:
+                self.ble_hid.send_consumer(keycode)
+        except Exception as e:
+            print(e)
+
     def run(self):
         self.setup()
         log = self.log
@@ -325,7 +338,13 @@ class Keyboard:
                                 mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
                                 self.press(*keycodes)
-                        elif kind == ACT_LAYER_TAP:
+                        elif kind == ACT_USAGE:
+                            if action_code & 0x400:
+                                self.send_consumer(action_code & 0x3FF)
+                        elif kind == ACT_MOUSEKEY:
+                            # todo
+                            pass
+                        elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = ((action_code >> 8) & 0xF)
                             mask = 1 << layer
                             if is_tapped(matrix, key):
@@ -341,6 +360,14 @@ class Keyboard:
                                 self.layer_mask |= mask
 
                             log('layers {}'.format(self.layer_mask))
+                        elif kind == ACT_MACRO:
+                            if callable(self.macro_handler):
+                                i = action_code & 0xFFF
+                                try:
+                                    self.macro_handler(dev, i, True)
+                                except Exception as e:
+                                    print(e)
+                                pass
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
                                 reset_into_bootloader()
@@ -370,12 +397,25 @@ class Keyboard:
                             mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             self.release(*keycodes)
-                        elif kind == ACT_LAYER_TAP:
+                        elif kind == ACT_USAGE:
+                            if action_code & 0x400:
+                                self.send_consumer(0)
+                        elif kind == ACT_MOUSEKEY:
+                            pass
+                        elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = ((action_code >> 8) & 0xF)
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:
                                 self.layer_mask &= ~(1 << layer)
                                 log('layers {}'.format(self.layer_mask))
+                        elif kind == ACT_MACRO:
+                            if callable(self.macro_handler):
+                                i = action_code & 0xFFF
+                                try:
+                                    self.macro_handler(dev, i, False)
+                                except Exception as e:
+                                    print(e)
+                                pass
 
                     if self.verbose:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))

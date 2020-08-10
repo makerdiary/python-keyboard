@@ -3,7 +3,6 @@ import _bleio
 import array
 import time
 import microcontroller
-import supervisor
 import usb_hid
 
 import adafruit_ble
@@ -345,18 +344,28 @@ class Keyboard:
                             # todo
                             pass
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
-                            layer = ((action_code >> 8) & 0xF)
+                            layer = ((action_code >> 8) & 0x1F)
                             mask = 1 << layer
                             if is_tapped(matrix, key):
                                 log('TAP')
                                 keycode = action_code & 0xFF
-                                if keycode != OP_TAP_TOGGLE:
+                                if keycode & 0xE0 == 0xC0:
+                                    log('LAYER_MODS')
+                                    mods = keycode & 0x1F
+                                    keycodes = mods_to_keycodes(mods)
+                                    self.press(*keycodes)
+                                elif keycode != OP_TAP_TOGGLE:
                                     keys[key] = keycode
                                     self.press(keycode)
                                 else:
                                     log('toggle {}'.format(self.layer_mask))
                                     self.layer_mask = (self.layer_mask & ~mask) | (mask & ~self.layer_mask)
                             else:
+                                if action_code & 0xE0 == 0xC0:
+                                    log('LAYER_MODS')
+                                    mods = action_code & 0x1F
+                                    keycodes = mods_to_keycodes(mods)
+                                    self.press(*keycodes)
                                 self.layer_mask |= mask
 
                             log('layers {}'.format(self.layer_mask))
@@ -367,7 +376,6 @@ class Keyboard:
                                     self.macro_handler(dev, i, True)
                                 except Exception as e:
                                     print(e)
-                                pass
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
                                 reset_into_bootloader()
@@ -403,9 +411,14 @@ class Keyboard:
                         elif kind == ACT_MOUSEKEY:
                             pass
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
-                            layer = ((action_code >> 8) & 0xF)
+                            layer = ((action_code >> 8) & 0x1F)
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:
+                                if keycode & 0xE0 == 0xC0:
+                                    log('LAYER_MODS')
+                                    mods = keycode & 0x1F
+                                    keycodes = mods_to_keycodes(mods)
+                                    self.release(*keycodes)
                                 self.layer_mask &= ~(1 << layer)
                                 log('layers {}'.format(self.layer_mask))
                         elif kind == ACT_MACRO:
@@ -415,7 +428,6 @@ class Keyboard:
                                     self.macro_handler(dev, i, False)
                                 except Exception as e:
                                     print(e)
-                                pass
 
                     if self.verbose:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))

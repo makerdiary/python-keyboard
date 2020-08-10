@@ -538,6 +538,22 @@ LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | get_actio
 LAYER_TAP_TOGGLE = lambda layer: LAYER_TAP(layer, OP_TAP_TOGGLE)
 LAYER_MODS = lambda layer, mods: LAYER_TAP(layer, 0xC0 | mods)
 
-COMMAND = lambda id, opt: ACTION(ACT_COMMAND,  opt << 8 | id)
+COMMAND = lambda opt, id: ACTION(ACT_COMMAND,  opt << 8 | id)
 
 BOOTLOADER = COMMAND(0, 0)
+HEATMAP = COMMAND(0, 1)
+
+BT = lambda n: COMMAND(1, n)
+BT0 = BT(0)
+BT1 = BT(1)
+BT2 = BT(2)
+BT3 = BT(3)
+BT4 = BT(4)
+BT5 = BT(5)
+BT6 = BT(6)
+BT7 = BT(7)
+BT8 = BT(8)
+BT9 = BT(9)
+BT_TOGGLE = BT(0xFF)
+BT_ON = BT(0xFE)
+BT_OFF = BT(0xFD)

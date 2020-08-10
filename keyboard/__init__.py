@@ -1,6 +1,8 @@
 
+import _bleio
 import array
 import time
+import microcontroller
 import supervisor
 import usb_hid
 
@@ -18,6 +20,7 @@ ___ = TRANSPARENT
 BOOT = BOOTLOADER
 L1 = LAYER_TAP(1)
 L2D = LAYER_TAP(2, D)
+L3B = LAYER_TAP(3, B)
 
 # Semicolon & Ctrl
 SCC = MODS_TAP(MODS(RCTRL), ';')
@@ -29,7 +32,7 @@ KEYMAP = (
         ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
         TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
         CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
-        LSHIFT,Z,   X,   C,   V,   B,   N,   M, ',', '.', '/',        RSHIFT,
+        LSHIFT,Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',        RSHIFT,
         LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
     ),
 
@@ -50,6 +53,15 @@ KEYMAP = (
         ___, ___, ___, ___, ___, ___,PGDN, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
+
+    # layer 3
+    (
+        BT_TOGGLE,BT1,BT2, BT3,BT4,BT5,BT6,BT7, BT8, BT9, BT0, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
+        ___, ___, ___,                ___,               ___, ___, ___,  ___
+    ),
 )
 
 @micropython.asm_thumb
@@ -60,8 +72,6 @@ def usb_is_connected():
     return mem(0x40000438) == 0x3
 
 def reset_into_bootloader():
-    import microcontroller
-
     microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
     microcontroller.reset()
 
@@ -134,19 +144,17 @@ class Keyboard:
         self.pair_keys = set()
         self.layer_mask = 1
         self.matrix = None
+        self.unique_array = microcontroller.cpu.uid * 2
 
         ble_hid = HIDService()
         advertisement = ProvideServicesAdvertisement(ble_hid)
         advertisement.appearance = 961
         advertisement.complete_name = 'Python Keyboard'
+        self.advertisement = advertisement
         ble = adafruit_ble.BLERadio()
         ble.name = 'Python Keyboard'
-        if ble.connected:
-            for c in ble.connections:
-                c.disconnect()
-        ble.start_advertising(advertisement)
         self.ble = ble
-        self.advertisement = advertisement
+        self.change_bt_id(1)
         self.ble_hid = HID(ble_hid.devices)
         try:
             self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
@@ -171,6 +179,35 @@ class Keyboard:
             for key in pair:
                 self.pair_keys.add(key)
 
+    def change_bt_id(self, n):
+        if self.ble.connected:
+            for c in self.ble.connections:
+                c.disconnect()
+        if self.ble._adapter.advertising:
+            self.ble.stop_advertising()
+
+        if 0 > n or n > 9:
+            return
+
+        uid = self.unique_array[n:n+6]
+        uid[-1] = uid[-1] | 0xC0
+        address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
+        try:
+            self.ble._adapter.address = address
+        except Exception:
+            print('Not support to change bluetooth mac address. Please upgrade to the lastest firmware')
+        print(self.ble._adapter.address)
+        self.ble.start_advertising(self.advertisement)
+
+    def toggle_bt(self):
+        if self.ble.connected:
+            for c in self.ble.connections:
+                c.disconnect()
+        elif self.ble._adapter.advertising:
+            self.ble.stop_advertising()
+        else:
+            self.ble.start_advertising(self.advertisement)
+
     def action_code(self, position):
         position = self.coords[position]
         layer_mask = self.layer_mask
@@ -191,18 +228,20 @@ class Keyboard:
         self.release(*keycodes)
 
     def press(self, *keycodes):
+        no_usb = True
         try:
             if usb_is_connected():
                 if not self.usb_hid:
                     self.usb_hid = HID(usb_hid.devices)
                 self.usb_hid.press(*keycodes)
+                no_usb = False
         except Exception as e:
             print(e)
 
         try:
             if self.ble.connected:
                 self.ble_hid.press(*keycodes)
-            elif not self.ble._adapter.advertising:
+            elif no_usb and not self.ble._adapter.advertising:
                 self.ble.start_advertising(self.advertisement)
         except Exception as e:
             print(e)
@@ -302,8 +341,15 @@ class Keyboard:
                                 self.layer_mask |= mask
 
                             log('layers {}'.format(self.layer_mask))
-                        elif action_code == BOOTLOADER:
-                            reset_into_bootloader()
+                        elif kind == ACT_COMMAND:
+                            if action_code == BOOTLOADER:
+                                reset_into_bootloader()
+                            elif action_code == BT_TOGGLE:
+                                self.toggle_bt()
+                            elif BT(0) <= action_code and action_code <= BT(9):
+                                i = action_code - BT(0)
+                                log('switch to bt {}'.format(i))
+                                self.change_bt_id(i)
 
                         dt = ms(matrix.time() - matrix.get_keydown_time(key))
                         log('{} \\ {} latency {}'.format(key, hex(keys[key]), dt))

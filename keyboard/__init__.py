@@ -97,38 +97,36 @@ class Device:
         self.send_consumer = kbd.send_consumer
         self.wait = kbd.matrix.wait
 
-    def send(self, data):
-        if type(data) is str:
-            for c in data:
-                code = get_action_code(c)
-                self.kbd.send(code)
-        elif type(data) is int:
-            code = get_action_code(c)
-            self.kbd.send(code)
-        else:
-            print('Invalid data')
+    def send(self, *names):
+        keycodes = tuple(map(lambda n: get_action_code(n), names))
+        self.kbd.send(*keycodes)
 
-    def press(self, data):
-        if type(data) is str:
-            for c in data:
-                code = get_action_code(c)
-                self.kbd.press(code)
-        elif type(data) is int:
-            code = get_action_code(c)
-            self.kbd.press(code)
-        else:
-            print('Invalid data')
+    def press(self, *names):
+        keycodes = map(lambda n: get_action_code(n), names)
+        self.kbd.press(*keycodes)
 
-    def release(self, data):
-        if type(data) is str:
-            for c in data:
-                code = get_action_code(c)
-                self.kbd.release(code)
-        elif type(data) is int:
-            code = get_action_code(c)
-            self.kbd.release(code)
-        else:
-            print('Invalid data')
+    def release(self, *names):
+        keycodes = map(lambda n: get_action_code(n), names)
+        self.kbd.release(*keycodes)
+
+    def send_text(self, text):
+        shift = False
+        for c in text:
+            keycode = ASCII_TO_KEYCODE[ord(c)]
+            if keycode & 0x80:
+                keycode = keycode & 0x7F
+                if not shift:
+                    shift = True
+                    self.kbd.press(SHIFT)
+            elif shift:
+                self.kbd.release(SHIFT)
+                shift = False
+
+            self.kbd.send(keycode)
+
+        if shift:
+            self.kbd.release(SHIFT)
+
 
 class Keyboard:
     Matrix = Matrix

@@ -64,16 +64,31 @@ keyboard.keymap = (
 
 
 def macro_handler(dev, n, is_down):
-    print('macro #{} {}'.format(n, int(is_down)))
+    if is_down:
+        dev.send_text('You pressed macro #{}\n'.format(n))
+    else:
+        dev.send_text('You released macro #{}\n'.format(n))
 
 def pairs_handler(dev, n):
-    dev.send('You just trigger No.{} pair keys'.format(n))
+    dev.send_text('You just triggered pair keys #{}\n'.format(n))
 
 
 keyboard.macro_handler = macro_handler
 keyboard.pairs_handler = pairs_handler
 
-# Pairs: J & K
-keyboard.pairs = [{35, 36}]
+# ESC   1   2   3   4   5   6   7   8   9   0   -   =  BACKSPACE
+# TAB   Q   W   E   R   T   Y   U   I   O   P   [   ]   |
+# CAPS  A   S   D   F   G   H   J   K   L   ;   "      ENTER
+#LSHIFT Z   X   C   V   B   N   M   ,   .   /         RSHIFT
+# LCTRL LGUI LALT          SPACE         RALT MENU  L1 RCTRL
+#
+#   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+#   27,26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14,
+#   28,29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,     40,
+#   52,51, 50, 49, 48, 47, 46, 45, 44, 43, 42,         41,
+#   53,  54, 55,             56,           57, 58, 59, 60
+
+# Pairs: J & K, U & I
+keyboard.pairs = [{35, 36}, {20, 19}]
 
 keyboard.run()

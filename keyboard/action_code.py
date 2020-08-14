@@ -346,17 +346,17 @@ ASCII_TO_KEYCODE = (
     b'\x00'  # RS
     b'\x00'  # US
     b'\x2c'  # SPACE
-    b'\x1e'  # ! (shift 1)
-    b'\x34'  # ' (shift ')
-    b'\x20'  # # (shift 3)
-    b'\x21'  # $ (shift 4)
-    b'\x22'  # % (shift 5)
-    b'\x24'  # & (shift 7)
+    b'\x9e'  # ! (shift 1)
+    b'\xb4'  # ' (shift ')
+    b'\xa0'  # # (shift 3)
+    b'\xa1'  # $ (shift 4)
+    b'\xa2'  # % (shift 5)
+    b'\xa4'  # & (shift 7)
     b'\x34'  # '
-    b'\x26'  # ( (shift 9)
-    b'\x27'  # ) (shift 0)
-    b'\x25'  # * (shift 8)
-    b'\x2e'  # + (shift =)
+    b'\xa6'  # ( (shift 9)
+    b'\xa7'  # ) (shift 0)
+    b'\xa5'  # * (shift 8)
+    b'\xae'  # + (shift =)
     b'\x36'  # ,
     b'\x2d'  # -
     b'\x37'  # .
@@ -371,44 +371,44 @@ ASCII_TO_KEYCODE = (
     b'\x24'  # 7
     b'\x25'  # 8
     b'\x26'  # 9
-    b'\x33'  # : (shift ;)
+    b'\xb3'  # : (shift ;)
     b'\x33'  # ;
-    b'\x36'  # < (shift ,)
+    b'\xb6'  # < (shift ,)
     b'\x2e'  # =
-    b'\x37'  # > (shift .)
-    b'\x38'  # ? (shift /)
-    b'\x1f'  # @ (shift 2)
-    b'\x04'  # A
-    b'\x05'  # B
-    b'\x06'  # C
-    b'\x07'  # D
-    b'\x08'  # E
-    b'\x09'  # F
-    b'\x0a'  # G
-    b'\x0b'  # H
-    b'\x0c'  # I
-    b'\x0d'  # J
-    b'\x0e'  # K
-    b'\x0f'  # L
-    b'\x10'  # M
-    b'\x11'  # N
-    b'\x12'  # O
-    b'\x13'  # P
-    b'\x14'  # Q
-    b'\x15'  # R
-    b'\x16'  # S
-    b'\x17'  # T
-    b'\x18'  # U
-    b'\x19'  # V
-    b'\x1a'  # W
-    b'\x1b'  # X
-    b'\x1c'  # Y
-    b'\x1d'  # Z
+    b'\xb7'  # > (shift .)
+    b'\xb8'  # ? (shift /)
+    b'\x9f'  # @ (shift 2)
+    b'\x84'  # A
+    b'\x85'  # B
+    b'\x86'  # C
+    b'\x87'  # D
+    b'\x88'  # E
+    b'\x89'  # F
+    b'\x8a'  # G
+    b'\x8b'  # H
+    b'\x8c'  # I
+    b'\x8d'  # J
+    b'\x8e'  # K
+    b'\x8f'  # L
+    b'\x90'  # M
+    b'\x91'  # N
+    b'\x92'  # O
+    b'\x93'  # P
+    b'\x94'  # Q
+    b'\x95'  # R
+    b'\x96'  # S
+    b'\x97'  # T
+    b'\x98'  # U
+    b'\x99'  # V
+    b'\x9a'  # W
+    b'\x9b'  # X
+    b'\x9c'  # Y
+    b'\x9d'  # Z
     b'\x2f'  # [
     b'\x31'  # \ backslash
     b'\x30'  # ]
-    b'\x23'  # ^ (shift 6)
-    b'\x2d'  # _ (shift -)
+    b'\xa3'  # ^ (shift 6)
+    b'\xad'  # _ (shift -)
     b'\x35'  # `
     b'\x04'  # a
     b'\x05'  # b
@@ -436,10 +436,10 @@ ASCII_TO_KEYCODE = (
     b'\x1b'  # x
     b'\x1c'  # y
     b'\x1d'  # z
-    b'\x2f'  # { (shift [)
-    b'\x31'  # | (shift \)
-    b'\x30'  # } (shift ])
-    b'\x35'  # ~ (shift `)
+    b'\xaf'  # { (shift [)
+    b'\xb1'  # | (shift \)
+    b'\xb0'  # } (shift ])
+    b'\xb5'  # ~ (shift `)
     b'\x4c'  # DEL DELETE Forward
 )
 
@@ -497,7 +497,9 @@ def get_action_code(x):
     if type(x) is int:
         return x if x > 9 else ASCII_TO_KEYCODE[ord(str(x))]
     if type(x) is str and len(x) == 1:
-        return ASCII_TO_KEYCODE[ord(str(x))]
+        return ASCII_TO_KEYCODE[ord(x)] & 0x7F
+    if x is None:
+        return 0
     raise ValueError('Invalid keyname {}'.format(x))
 
 def MODS(*args):

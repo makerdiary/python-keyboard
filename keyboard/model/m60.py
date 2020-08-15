@@ -1,13 +1,13 @@
 
-
 try:
+    # using built-in matrix if it is available
     from matrix import Matrix
 except ImportError:
     from ..matrix import Matrix
     from board import *
 
-    Matrix.ROWS = (R1, R2, R3, R4, R5, R6, R7)
-    Matrix.COLS = (C1, C2, C3, C4, C5, C6, C7)
+    Matrix.ROWS = (R1, R2, R3, R4, R5, R6, R7, R8)
+    Matrix.COLS = (C1, C2, C3, C4, C5, C6, C7, C8)
     Matrix.ROW2COL = False
 
 

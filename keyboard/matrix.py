@@ -41,6 +41,7 @@ class Matrix:
         self.t1 = [0] * self.keys                   # key released time
         self.mask = 0
         self.count = 0
+        self._debounce_time = 20000000
 
     def scan(self):
         t = time.monotonic_ns()
@@ -60,7 +61,7 @@ class Matrix:
                 if col.value == pressed:
                     key_mask = 1 << key_index
                     if not (last_mask & key_mask):
-                        if t - self.t1[key_index] < 20000000:
+                        if t - self.t1[key_index] < self._debounce_time:
                             print('debonce')
                             continue
                             
@@ -70,7 +71,7 @@ class Matrix:
                     mask |= key_mask
                     count += 1
                 elif last_mask and (last_mask & (1 << key_index)):
-                    if t - self.t0[key_index] < 20000000:
+                    if t - self.t0[key_index] < self._debounce_time:
                         print('debonce')
                         mask |= 1 << key_index
                         continue
@@ -133,3 +134,14 @@ class Matrix:
 
     def ms(self, t):
         return t // 1000000
+
+    @property
+    def debounce_time(self):
+        return self._debounce_time // 1000000
+
+    @debounce_time.setter
+    def debounce_time(self, t):
+        self._debounce_time = t * 1000000
+
+    def suspend(self):
+        pass

@@ -1,10 +1,12 @@
 
+from .is32fl3733 import IS31FL3733
+
 try:
     # using built-in matrix if it is available
     from matrix import Matrix
 except ImportError:
     from ..matrix import Matrix
-    from board import *
+    from board import R1, R2, R3, R4, R5, R6, R7, R8, C1, C2, C3, C4, C5, C6, C7, C8
 
     Matrix.ROWS = (R1, R2, R3, R4, R5, R6, R7, R8)
     Matrix.COLS = (C1, C2, C3, C4, C5, C6, C7, C8)
@@ -23,3 +25,55 @@ COORDS = (
     52,51, 50, 49, 48, 47, 46, 45, 44, 43, 42,         41,
     53,  54, 55,             56,           57, 58, 59, 60
 )
+
+
+class Backlight:
+    def __init__(self):
+        self.dev = IS31FL3733()
+        self._hid_leds = 0
+        self._bt_led = None
+        self.pixel = self.dev.pixel
+
+    def on(self, r=0xFF, g=0xFF, b=0xFF):
+        for i in range(64):
+            self.pixel(i, r, g, b)
+        self.update()
+
+    def off(self):
+        for i in range(64):
+            self.pixel(i, 0, 0, 0)
+        self.update()
+        if (self._hid_leds & 2) == 0 and not self._bt_led:
+            self.dev.power.value = 0
+
+    def set_brightness(self, v):
+        self.dev.set_brightness(v)
+
+    def set_hid_leds(self, v):
+        self._hid_leds = v
+        if self._hid_leds & 2:
+            # capslock
+            self.dev.update_pixel(28, 0, 0x80, 0)
+        else:
+            self.dev.update_pixel(28, 0, 0, 0)
+            if self._bt_led is None:
+                self.dev.power.value = 0
+
+    def set_bt_led(self, v):
+        if self._bt_led is not None:
+            self.dev.breathing_pixel(self._bt_led, 0)
+        if v == 0:
+            v = 10
+        self._bt_led = v
+        if v is not None:
+            self.dev.breathing_pixel(v, 2)
+        elif (self._hid_leds & 2) == 0:
+            self.dev.power.value = 0
+
+    def update(self):
+        if self._hid_leds & 2:
+            self.pixel(28, 0, 0x80, 0)
+        if self._bt_led:
+            self.pixel(self._bt_led, 0, 0, 0)
+        self.pixel(64, 0, 0, 0)
+        self.dev.update()

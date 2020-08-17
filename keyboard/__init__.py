@@ -11,7 +11,7 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard.hid import HIDService
 
 from .hid import HID
-from .model import Matrix, COORDS
+from .model import Matrix, COORDS, Backlight
 from .action_code import *
 
 
@@ -130,6 +130,7 @@ class Device:
 
 class Keyboard:
     Matrix = Matrix
+    Backlight = Backlight
     coords = COORDS
 
     def __init__(self, keymap=KEYMAP, pairs=(), verbose=True):
@@ -140,8 +141,11 @@ class Keyboard:
         self.pair_keys = set()
         self.macro_handler = None
         self.layer_mask = 1
-        self.matrix = None
+        self.matrix = self.Matrix()
+        self.backlight = self.Backlight()
         self.unique_array = microcontroller.cpu.uid * 2
+        self.usb_status = 0
+        self.leds = None
 
         ble_hid = HIDService()
         advertisement = ProvideServicesAdvertisement(ble_hid)
@@ -151,24 +155,38 @@ class Keyboard:
         ble = adafruit_ble.BLERadio()
         ble.name = 'Python Keyboard'
         self.ble = ble
+        self.ble_id = 1
         self.change_bt_id(1)
         self.ble_hid = HID(ble_hid.devices)
         try:
             self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
+            self.usb_status = 1
         except Exception:
             self.usb_hid = None
 
-    def hook(self):
-        if usb_is_connected() and not self.usb_hid:
-            try:
-                self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
-            except Exception:
-                self.usb_hid = None
+    def check(self):
+        if usb_is_connected():
+            if self.usb_status == 0:
+                self.usb_status = 1
+                print('usb connected')
+        elif self.usb_status == 1:
+            self.usb_status = 0
+            print('usb disconnected')
+            
+        if  self.adv_timeout and (self.ble.connected or time.time() > self.adv_timeout):
+            self.adv_timeout = 0
+            self.backlight.set_bt_led(None)
+            if self.ble._adapter.advertising:
+                self.ble.stop_advertising()
+
+        if self.ble.connected:
+            leds = self.ble_hid.leds
+            if self.leds is not leds:
+                self.leds = leds
+                self.backlight.set_hid_leds(leds)
+                print(leds)
 
     def setup(self):
-        if not self.matrix:
-            self.matrix = self.Matrix()
-
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
         self.actonmap = tuple(convert(layer) for layer in self.keymap)
 
@@ -191,10 +209,13 @@ class Keyboard:
         address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
         try:
             self.ble._adapter.address = address
+            self.ble_id = n
         except Exception:
             print('Not support to change bluetooth mac address. Please upgrade to the lastest firmware')
         print(self.ble._adapter.address)
         self.ble.start_advertising(self.advertisement)
+        self.backlight.set_bt_led(n)
+        self.adv_timeout = time.time() + 60
 
     def toggle_bt(self):
         if self.ble.connected:
@@ -202,8 +223,12 @@ class Keyboard:
                 c.disconnect()
         elif self.ble._adapter.advertising:
             self.ble.stop_advertising()
+            self.backlight.set_bt_led(None)
+            self.adv_timeout = 0
         else:
             self.ble.start_advertising(self.advertisement)
+            self.backlight.set_bt_led(self.ble_id)
+            self.adv_timeout = time.time() + 60
 
     def action_code(self, position):
         position = self.coords[position]
@@ -279,6 +304,7 @@ class Keyboard:
         keys = [0] * matrix.keys
         ms = matrix.ms
         while True:
+            self.check()
             n = matrix.wait(10)
             if n == 0:
                 continue

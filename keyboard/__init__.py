@@ -96,6 +96,8 @@ class Device:
         self.kbd = kbd
         self.send_consumer = kbd.send_consumer
         self.wait = kbd.matrix.wait
+        self.scan = kbd.matrix.scan
+        self.suspend = kbd.matrix.suspend
 
     def send(self, *names):
         keycodes = tuple(map(lambda n: get_action_code(n), names))
@@ -150,10 +152,8 @@ class Keyboard:
         ble_hid = HIDService()
         advertisement = ProvideServicesAdvertisement(ble_hid)
         advertisement.appearance = 961
-        advertisement.complete_name = 'Python Keyboard'
         self.advertisement = advertisement
         ble = adafruit_ble.BLERadio()
-        ble.name = 'Python Keyboard'
         self.ble = ble
         self.ble_id = 1
         self.change_bt_id(1)
@@ -172,6 +172,8 @@ class Keyboard:
         elif self.usb_status == 1:
             self.usb_status = 0
             print('usb disconnected')
+            if not self.ble._adapter.advertising:
+                self.start_advertising()
             
         if  self.adv_timeout and (self.ble.connected or time.time() > self.adv_timeout):
             self.adv_timeout = 0
@@ -194,6 +196,16 @@ class Keyboard:
             for key in pair:
                 self.pair_keys.add(key)
 
+    def start_advertising(self):
+        self.ble.start_advertising(self.advertisement)
+        self.backlight.set_bt_led(self.ble_id)
+        self.adv_timeout = time.time() + 60
+
+    def stop_advertising(self):
+        self.ble.stop_advertising()
+        self.backlight.set_bt_led(None)
+        self.adv_timeout = 0
+
     def change_bt_id(self, n):
         if self.ble.connected:
             for c in self.ble.connections:
@@ -210,25 +222,22 @@ class Keyboard:
         try:
             self.ble._adapter.address = address
             self.ble_id = n
+            name = 'PYKB {}'.format(n)
+            self.advertisement.complete_name = name
+            self.ble.name = name
         except Exception:
             print('Not support to change bluetooth mac address. Please upgrade to the lastest firmware')
         print(self.ble._adapter.address)
-        self.ble.start_advertising(self.advertisement)
-        self.backlight.set_bt_led(n)
-        self.adv_timeout = time.time() + 60
+        self.start_advertising()
 
     def toggle_bt(self):
         if self.ble.connected:
             for c in self.ble.connections:
                 c.disconnect()
         elif self.ble._adapter.advertising:
-            self.ble.stop_advertising()
-            self.backlight.set_bt_led(None)
-            self.adv_timeout = 0
+            self.stop_advertising()
         else:
-            self.ble.start_advertising(self.advertisement)
-            self.backlight.set_bt_led(self.ble_id)
-            self.adv_timeout = time.time() + 60
+            self.start_advertising()
 
     def action_code(self, position):
         position = self.coords[position]
@@ -264,7 +273,7 @@ class Keyboard:
             if self.ble.connected:
                 self.ble_hid.press(*keycodes)
             elif no_usb and not self.ble._adapter.advertising:
-                self.ble.start_advertising(self.advertisement)
+                self.start_advertising()
         except Exception as e:
             print(e)
 

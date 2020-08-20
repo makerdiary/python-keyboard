@@ -121,7 +121,7 @@ Simultaneously pressing two keys (interval less than 25ms) activates an alternat
 
 ```python
 def pairs_handler(dev, n):
-    dev.send('You just trigger No.{} pair keys'.format(n))
+    dev.send_text('You just trigger No.{} pair keys'.format(n))
 
 keyboard.pairs_handler = pairs_handler
 
@@ -153,10 +153,11 @@ The module is included in the latest firmware in `firmware/`. If you are interes
 
 
 ## Todo
-- [ ] add macro
-- [ ] add system keys and cosumer keys
+- [x] add macro
+- [x] add cosumer keys
+- [X] add RGB backlight
+- [ ] add system keys
 - [ ] add mouse keys
-- [ ] add RGB backlight
 
 
 ## Credits

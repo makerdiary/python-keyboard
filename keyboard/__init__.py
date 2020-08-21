@@ -1,7 +1,9 @@
 
-import _bleio
 import array
 import time
+import struct
+
+import _bleio
 import microcontroller
 import usb_hid
 
@@ -131,10 +133,6 @@ class Device:
 
 
 class Keyboard:
-    Matrix = Matrix
-    Backlight = Backlight
-    coords = COORDS
-
     def __init__(self, keymap=KEYMAP, pairs=(), verbose=True):
         self.keymap = KEYMAP
         self.pairs = pairs
@@ -143,20 +141,25 @@ class Keyboard:
         self.pair_keys = set()
         self.macro_handler = None
         self.layer_mask = 1
-        self.matrix = self.Matrix()
-        self.backlight = self.Backlight()
-        self.unique_array = microcontroller.cpu.uid * 2
+        self.matrix = Matrix()
+        self.backlight = Backlight()
+        self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
         self.leds = None
 
+        self.data = array.array('L', microcontroller.nvm[:272])
+        if self.data[0] != 0x424b5950:
+            self.data[0] = 0x424b5950
+            self.data[1] = 1
+            for i in range(4, 68): self.data[i] = 0
+        self.ble_id = self.data[1]
+        self.heatmap = memoryview(self.data)[4:]
+
         ble_hid = HIDService()
-        advertisement = ProvideServicesAdvertisement(ble_hid)
-        advertisement.appearance = 961
-        self.advertisement = advertisement
-        ble = adafruit_ble.BLERadio()
-        self.ble = ble
-        self.ble_id = 1
-        self.change_bt_id(1)
+        self.advertisement = ProvideServicesAdvertisement(ble_hid)
+        self.advertisement.appearance = 961
+        self.ble = adafruit_ble.BLERadio()
+        self.change_bt(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
         try:
             self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
@@ -206,7 +209,7 @@ class Keyboard:
         self.backlight.set_bt_led(None)
         self.adv_timeout = 0
 
-    def change_bt_id(self, n):
+    def change_bt(self, n):
         if self.ble.connected:
             for c in self.ble.connections:
                 c.disconnect()
@@ -216,15 +219,18 @@ class Keyboard:
         if 0 > n or n > 9:
             return
 
-        uid = self.unique_array[n:n+6]
+        uid = self.uid[n:n+6]
         uid[-1] = uid[-1] | 0xC0
         address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
         try:
             self.ble._adapter.address = address
-            self.ble_id = n
             name = 'PYKB {}'.format(n)
             self.advertisement.complete_name = name
             self.ble.name = name
+            self.ble_id = n
+            if self.data[1] != n:
+                self.data[1] = n
+                microcontroller.nvm[:272] = struct.pack('68L', *self.data)
         except Exception:
             print('Not support to change bluetooth mac address. Please upgrade to the lastest firmware')
         print(self.ble._adapter.address)
@@ -240,7 +246,7 @@ class Keyboard:
             self.start_advertising()
 
     def action_code(self, position):
-        position = self.coords[position]
+        position = COORDS[position]
         layer_mask = self.layer_mask
         for layer in range(len(self.actonmap) - 1, -1, -1):
             if (layer_mask >> layer) & 1:
@@ -305,6 +311,12 @@ class Keyboard:
         except Exception as e:
             print(e)
 
+    def get(self):
+        key = self.matrix.get()
+        if key & 0x80 == 0:
+            self.heatmap[key] += 1
+        return key
+
     def run(self):
         self.setup()
         log = self.log
@@ -328,8 +340,8 @@ class Keyboard:
                 pair = {matrix.view(0), matrix.view(1)}
                 if pair in self.pairs:
                     pair_index = self.pairs.index(pair)
-                    key1 = matrix.get()
-                    key2 = matrix.get()
+                    key1 = self.get()
+                    key2 = self.get()
 
                     dt = ms(matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1))
                     log('pair keys {} {}, dt = {}'.format(pair_index, pair, dt))
@@ -341,7 +353,7 @@ class Keyboard:
                             pass
 
             while len(matrix):
-                event = matrix.get()
+                event = self.get()
                 key = event & 0x7F
                 if event & 0x80 == 0:
                     action_code = self.action_code(key)
@@ -417,7 +429,7 @@ class Keyboard:
                             elif BT(0) <= action_code and action_code <= BT(9):
                                 i = action_code - BT(0)
                                 log('switch to bt {}'.format(i))
-                                self.change_bt_id(i)
+                                self.change_bt(i)
 
                         dt = ms(matrix.time() - matrix.get_keydown_time(key))
                         log('{} \\ {} latency {}'.format(key, hex(keys[key]), dt))

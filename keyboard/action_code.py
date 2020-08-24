@@ -550,6 +550,9 @@ COMMAND = lambda opt, n: ACTION(ACT_COMMAND,  opt << 8 | n)
 
 BOOTLOADER = COMMAND(0, 0)
 HEATMAP = COMMAND(0, 1)
+SUSPEND = COMMAND(0, 2)
+SHUTDOWN = COMMAND(0, 3)
+USB_TOGGLE = COMMAND(0, 4)
 
 BT = lambda n: COMMAND(1, n)
 BT0 = BT(0)
@@ -567,7 +570,6 @@ BT_ON = BT(0xFE)
 BT_OFF = BT(0xFD)
 
 # Consumer Page(0x0C)
-# following are supported by Windows: http://msdn.microsoft.com/en-us/windows/hardware/gg463372.aspx
 AUDIO_MUTE =                ACTION_USAGE_CONSUMER(0x00E2)
 AUDIO_VOL_UP =              ACTION_USAGE_CONSUMER(0x00E9)
 AUDIO_VOL_DOWN =            ACTION_USAGE_CONSUMER(0x00EA)

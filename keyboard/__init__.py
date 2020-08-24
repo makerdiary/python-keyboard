@@ -161,37 +161,38 @@ class Keyboard:
         self.ble = adafruit_ble.BLERadio()
         self.change_bt(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
-        try:
-            self.usb_hid = HID(usb_hid.devices) if usb_is_connected() else None
-            self.usb_status = 1
-        except Exception:
-            self.usb_hid = None
+        self.usb_hid = HID(usb_hid.devices)
 
     def check(self):
+        if  self.adv_timeout:
+            if self.ble.connected:
+                self.adv_timeout = 0
+                self.backlight.set_bt_led(None)
+
+                for c in self.ble.connections:
+                    if c.connection_interval > 11.25:
+                        c.connection_interval = 11.25
+                    self.log('ble connection interval {}'.format(c.connection_interval))
+            elif time.time() > self.adv_timeout:
+                self.stop_advertising()
+
         leds = None
         if usb_is_connected():
             if self.usb_status == 0:
-                self.usb_status = 1
-            if self.usb_hid:
+                self.usb_status = 3
+            elif self.usb_status == 3:
                 leds = self.usb_hid.leds
-        elif self.usb_status == 1:
+        elif self.usb_status > 0:
             self.usb_status = 0
-            print('usb disconnected')
             if not self.ble._adapter.advertising:
                 self.start_advertising()
-            
-        if  self.adv_timeout and (self.ble.connected or time.time() > self.adv_timeout):
-            self.adv_timeout = 0
-            self.backlight.set_bt_led(None)
-            if self.ble._adapter.advertising:
-                self.ble.stop_advertising()
 
-        if self.ble.connected and leds is None:
-            leds = self.ble_hid.leds
-        if self.leds is not leds:
+        if leds is None:
+            leds = self.ble_hid.leds if self.ble.connected else 0
+        if leds != self.leds:
             self.leds = leds
             self.backlight.set_hid_leds(leds)
-            print(leds)
+            self.log('keyboard leds {}'.format(bin(leds)))
 
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
@@ -207,9 +208,12 @@ class Keyboard:
         self.adv_timeout = time.time() + 60
 
     def stop_advertising(self):
-        self.ble.stop_advertising()
-        self.backlight.set_bt_led(None)
-        self.adv_timeout = 0
+        try:
+            self.backlight.set_bt_led(None)
+            self.adv_timeout = 0
+            self.ble.stop_advertising()
+        except Exception as e:
+            print(e)
 
     def change_bt(self, n):
         if self.ble.connected:
@@ -233,9 +237,9 @@ class Keyboard:
             if self.data[1] != n:
                 self.data[1] = n
                 microcontroller.nvm[:272] = struct.pack('68L', *self.data)
-        except Exception:
-            print('Not support to change bluetooth mac address. Please upgrade to the lastest firmware')
-        print(self.ble._adapter.address)
+        except Exception as e:
+            print(e)
+        self.log(self.ble._adapter.address)
         self.start_advertising()
 
     def toggle_bt(self):
@@ -246,6 +250,10 @@ class Keyboard:
             self.stop_advertising()
         else:
             self.start_advertising()
+
+    def toggle_usb(self):
+        if usb_is_connected():
+            self.usb_status = 1 if self.usb_status == 3 else 3
 
     def action_code(self, position):
         position = COORDS[position]
@@ -267,43 +275,40 @@ class Keyboard:
         self.release(*keycodes)
 
     def press(self, *keycodes):
-        no_usb = True
         try:
-            if usb_is_connected():
-                if not self.usb_hid:
-                    self.usb_hid = HID(usb_hid.devices)
+            if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.press(*keycodes)
-                no_usb = False
+                return
         except Exception as e:
             print(e)
 
         try:
             if self.ble.connected:
                 self.ble_hid.press(*keycodes)
-            elif no_usb and not self.ble._adapter.advertising:
+            elif not self.ble._adapter.advertising:
                 self.start_advertising()
         except Exception as e:
             print(e)
 
     def release(self, *keycodes):
         try:
-            if usb_is_connected():
+            if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.release(*keycodes)
+                return
         except Exception as e:
             print(e)
 
         try:
             if self.ble.connected:
                 self.ble_hid.release(*keycodes)
-                # for c in self.ble.connections:
-                #     print('ble connect interval {}'.format(c.connection_interval))
         except Exception as e:
             print(e)
 
     def send_consumer(self, keycode):
         try:
-            if usb_is_connected():
+            if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.send_consumer(keycode)
+                return
         except Exception as e:
             print(e)
 
@@ -327,8 +332,8 @@ class Keyboard:
         keys = [0] * matrix.keys
         ms = matrix.ms
         while True:
+            n = matrix.wait()
             self.check()
-            n = matrix.wait(10)
             if n == 0:
                 continue
 
@@ -426,6 +431,16 @@ class Keyboard:
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
                                 reset_into_bootloader()
+                            elif action_code == SUSPEND:
+                                matrix.suspend()
+                            elif action_code == SHUTDOWN:
+                                microcontroller.reset()
+                            elif action_code == HEATMAP:
+                                microcontroller.nvm[:272] = struct.pack('68L', *self.data)
+                                if usb_is_connected():
+                                    microcontroller.reset()
+                            elif action_code == USB_TOGGLE:
+                                self.toggle_usb()
                             elif action_code == BT_TOGGLE:
                                 self.toggle_bt()
                             elif BT(0) <= action_code and action_code <= BT(9):

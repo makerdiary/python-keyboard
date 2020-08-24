@@ -168,10 +168,12 @@ class Keyboard:
             self.usb_hid = None
 
     def check(self):
+        leds = None
         if usb_is_connected():
             if self.usb_status == 0:
                 self.usb_status = 1
-                print('usb connected')
+            if self.usb_hid:
+                leds = self.usb_hid.leds
         elif self.usb_status == 1:
             self.usb_status = 0
             print('usb disconnected')
@@ -184,12 +186,12 @@ class Keyboard:
             if self.ble._adapter.advertising:
                 self.ble.stop_advertising()
 
-        if self.ble.connected:
+        if self.ble.connected and leds is None:
             leds = self.ble_hid.leds
-            if self.leds is not leds:
-                self.leds = leds
-                self.backlight.set_hid_leds(leds)
-                print(leds)
+        if self.leds is not leds:
+            self.leds = leds
+            self.backlight.set_hid_leds(leds)
+            print(leds)
 
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))

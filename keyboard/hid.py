@@ -11,8 +11,8 @@ class HID:
         # self.mouse = Mouse(devices)
 
         for device in devices:
-            if hasattr(device, '_characteristic') and device.usage_page == 0x1 and device.usage == 0x6:
-                self._leds = device._characteristic
+            if hasattr(device, 'report') and device.usage_page == 0x1 and device.usage == 0x6:
+                self._leds = device
                 break
         else:
             self._leds = None
@@ -26,5 +26,5 @@ class HID:
     @property
     def leds(self):
         if self._leds:
-            return self._leds.value[0]
-        return 0
+            return self._leds.report[0]
+        return None

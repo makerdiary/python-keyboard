@@ -94,6 +94,13 @@ class IS31FL3733:
         self.page(1)
         self.i2c.writeto(self.address, self._buffer)
 
+    def any(self):
+        '''Check if any pixel is not zero'''
+        for pixel in self.pixels:
+            if pixel > 0:
+                return True
+        return False
+
     def write(self, register, value):
         if type(value) is int:
             self.i2c.writeto(self.address, bytearray((register, value)))

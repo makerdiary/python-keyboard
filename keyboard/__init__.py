@@ -96,6 +96,7 @@ def is_tapped(matrix, key):
 class Device:
     def __init__(self, kbd):
         self.kbd = kbd
+        self.backlight = kbd.backlight
         self.send_consumer = kbd.send_consumer
         self.wait = kbd.matrix.wait
         self.scan = kbd.matrix.scan

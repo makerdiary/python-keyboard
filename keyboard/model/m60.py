@@ -43,8 +43,6 @@ class Backlight:
         for i in range(64):
             self.pixel(i, 0, 0, 0)
         self.update()
-        if (self._hid_leds & 2) == 0 and not self._bt_led:
-            self.dev.power.value = 0
 
     def set_brightness(self, v):
         self.dev.set_brightness(v)
@@ -56,7 +54,7 @@ class Backlight:
             self.dev.update_pixel(28, 0, 0x80, 0)
         else:
             self.dev.update_pixel(28, 0, 0, 0)
-            if self._bt_led is None:
+            if self._bt_led is None and not self.dev.any():
                 self.dev.power.value = 0
 
     def set_bt_led(self, v):
@@ -71,9 +69,14 @@ class Backlight:
             self.dev.power.value = 0
 
     def update(self):
+        in_use = False
         if self._hid_leds & 2:
             self.pixel(28, 0, 0x80, 0)
+            in_use = True
         if self._bt_led:
             self.pixel(self._bt_led, 0, 0, 0)
-        self.pixel(64, 0, 0, 0)
+            in_use = True
+        self.pixel(63, 0, 0, 0)
         self.dev.update()
+        if not in_use and not self.dev.any():
+            self.dev.power.value = 0

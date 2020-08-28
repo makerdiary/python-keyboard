@@ -3,7 +3,7 @@
 M60 is not just a USB HID device, but also a USB storage device. Python code can be saved and executed in the keyboard. When the keyboard powers on, it will run the Python file `code.py` in its USB storage.
 In `code.py`, we can modify its keymap, add a macro and add a new feature to keyboard.
 
-![](https://gitee.com/makerdiary/python-keyboard/raw/resource/img/CIRCUITPY.png)
+![](https://gitee.com/makerdiary/python-keyboard/raw/resource/img/CIRCUITPY-en.png)
 
 The default content of `code.py` is:
 

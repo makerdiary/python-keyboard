@@ -31,9 +31,11 @@ Python Keyboard
 
 但通过引入[ TMK ](https://github.com/tmk/tmk_keyboard/blob/master/tmk_core/doc/keymap.md)中的层级切换和组合按键功能，并融入 [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard) 中把手指尽量停留在 <kbd>A</kbd>、<kbd>S</kbd>、<kbd>D</kbd>、<kbd>F</kbd> 和 <kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>、<kbd>;</kbd> 等起始键位的理念，我们可以让这个小键盘更具生产力。
 
-这里引入 Tap-key 功能，即按某个按键不放激活另外的功能。
+这里引入 Tap-key 功能，Tap-key通过短按和长按两种功能，短按用作正常按键，长按不放则激活额外的功能。
 
-比如把 <kbd>d</kbd> 用作 Tap-key，即短按 <kbd>d</kbd> 输出 <kbd>d</kbd>， 按住 <kbd>d</kbd> 不放则激活移动光标功能，<kbd>H</kbd>、<kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>被映射为方向键，而 <kbd>U</kbd> 和 <kbd>N</kbd> 则为 <kbb>PgUp</kbd> 和 <kbd>PgDn</kbd>。
+### <kbd>D</kbd> 键导航
+
+这里将 <kbd>D</kbd> 被用作Tap-key。短按，输出`d`；长按<kbd>D</kbd>不放，则激活移动光标功能，<kbd>H</kbd>、<kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>被映射为方向键，而 <kbd>U</kbd> 和 <kbd>N</kbd> 则为 <kbb>PgUp</kbd> 和 <kbd>PgDn</kbd>。
 
 ![](img/d-for-navigation.png)
 
@@ -44,22 +46,34 @@ Python Keyboard
 + <kbd>d</kbd> + <kbd>u</kbd> → <kbd>PgUp</kbd>
 + <kbd>d</kbd> + <kbd>n</kbd> → <kbd>PgDn</kbd>
 
-要实现这个功能，把 `keyboard.py` 和 `action_code.py` 拷贝键盘的 U 盘中，然后将键盘的 `code.py` 修改为：
+### <kbd>;</kbd> 键用作 <kbd>Ctrl</kbd>
 
-```python
-# code.py
+<kbd>;</kbd>也被用作Tap-key，短按输出`;`，长按用作<kbd>Ctrl</kbd>。
 
-from keyboard import main
+![](https://github.com/xiongyihui/keyboard/raw/master/img/semicolon_as_ctrl.png)
 
-main()
-```
++ <kbd>;</kbd> + <kbd>c</kbd> = <kbd>Ctrl</kbd> + <kbd>c</kbd>
++ <kbd>;</kbd> + <kbd>v</kbd> = <kbd>Ctrl</kbd> + <kbd>v</kbd>
++ <kbd>;</kbd> + <kbd>x</kbd> = <kbd>Ctrl</kbd> + <kbd>x</kbd>
++ <kbd>;</kbd> + <kbd>a</kbd> = <kbd>Ctrl</kbd> + <kbd>a</kbd>
 
-另外，这个 Python 键盘还支持了同时按下两个按键 (间隔不超过25ms) 激活特殊功能，也计划支持长按 <kbd>;</kbd> 用作 <kbd>Ctrl</kbd>，用 <kbd>;</kbd> + <kbd>c</kbd> 替代 <kbd>Ctrl</kbd> + <kbd>c</kbd>，在 VS Code 中使用很方便。
+在VS Code里面双手打字时，用左右手配合按<kbd>;</kbd> + <kbd>C</kbd>比左手按<kbd>Ctrl</kbd> + <kbd>C</kbd>要方便一些。值得一提的是，VS Code中未选中文本时，<kbd>Ctrl</kbd> + <kbd>C</kbd>是复制光标所在的行，之后<kbd>Ctrl</kbd> + <kbd>V</kbd>，则把复制的行粘贴到光标下新的一行。再配合<kbd>D</kbd> + <kbd>H</kbd>、<kbd>J</kbd>、<kbd>K</kbd>、<kbd>L</kbd>移动光标，可以很便捷。
+
+而在浏览器中，可用<kbd>;</kbd> + <kbd>Tab</kbd>替代<kbd>Ctrl</kbd> + <kbd>Tab</kbd>切换标签页，<kbd>;</kbd> + <kbd>T</kbd>打开新标签页，<kbd>;</kbd> + <kbd>W</kbd>关闭标签页。
+
+### 结对快捷键 (Pair-Keys)
+另外，键盘还支持同时（或10ms以内）按下两个键触发特殊功能，这里称之为结对快捷键（pair-keys）。
 
 ## Todo
-+ 长按 <kbd>;</kbd> 用作 <kbd>Ctrl</kbd>
-+ 宏功能
-+ 优化速度
+- [ ] 添加鼠标功能
+- [ ] 添加炫酷的灯效
+
+
+## 致谢
++ [MicroPython](https://github.com/micropython/micropython)
++ [CircuitPython](https://github.com/adafruit/circuitpython)
++ [TMK](https://github.com/tmk/tmk_keyboard)
++ [Toward a more useful keyboard](https://github.com/jasonrudolph/keyboard)
 
 
 [1]: https://github.com/makerdiary/python-keyboard

@@ -346,17 +346,17 @@ ASCII_TO_KEYCODE = (
     b'\x00'  # RS
     b'\x00'  # US
     b'\x2c'  # SPACE
-    b'\x1e'  # ! (shift 1)
-    b'\x34'  # ' (shift ')
-    b'\x20'  # # (shift 3)
-    b'\x21'  # $ (shift 4)
-    b'\x22'  # % (shift 5)
-    b'\x24'  # & (shift 7)
+    b'\x9e'  # ! (shift 1)
+    b'\xb4'  # ' (shift ')
+    b'\xa0'  # # (shift 3)
+    b'\xa1'  # $ (shift 4)
+    b'\xa2'  # % (shift 5)
+    b'\xa4'  # & (shift 7)
     b'\x34'  # '
-    b'\x26'  # ( (shift 9)
-    b'\x27'  # ) (shift 0)
-    b'\x25'  # * (shift 8)
-    b'\x2e'  # + (shift =)
+    b'\xa6'  # ( (shift 9)
+    b'\xa7'  # ) (shift 0)
+    b'\xa5'  # * (shift 8)
+    b'\xae'  # + (shift =)
     b'\x36'  # ,
     b'\x2d'  # -
     b'\x37'  # .
@@ -371,44 +371,44 @@ ASCII_TO_KEYCODE = (
     b'\x24'  # 7
     b'\x25'  # 8
     b'\x26'  # 9
-    b'\x33'  # : (shift ;)
+    b'\xb3'  # : (shift ;)
     b'\x33'  # ;
-    b'\x36'  # < (shift ,)
+    b'\xb6'  # < (shift ,)
     b'\x2e'  # =
-    b'\x37'  # > (shift .)
-    b'\x38'  # ? (shift /)
-    b'\x1f'  # @ (shift 2)
-    b'\x04'  # A
-    b'\x05'  # B
-    b'\x06'  # C
-    b'\x07'  # D
-    b'\x08'  # E
-    b'\x09'  # F
-    b'\x0a'  # G
-    b'\x0b'  # H
-    b'\x0c'  # I
-    b'\x0d'  # J
-    b'\x0e'  # K
-    b'\x0f'  # L
-    b'\x10'  # M
-    b'\x11'  # N
-    b'\x12'  # O
-    b'\x13'  # P
-    b'\x14'  # Q
-    b'\x15'  # R
-    b'\x16'  # S
-    b'\x17'  # T
-    b'\x18'  # U
-    b'\x19'  # V
-    b'\x1a'  # W
-    b'\x1b'  # X
-    b'\x1c'  # Y
-    b'\x1d'  # Z
+    b'\xb7'  # > (shift .)
+    b'\xb8'  # ? (shift /)
+    b'\x9f'  # @ (shift 2)
+    b'\x84'  # A
+    b'\x85'  # B
+    b'\x86'  # C
+    b'\x87'  # D
+    b'\x88'  # E
+    b'\x89'  # F
+    b'\x8a'  # G
+    b'\x8b'  # H
+    b'\x8c'  # I
+    b'\x8d'  # J
+    b'\x8e'  # K
+    b'\x8f'  # L
+    b'\x90'  # M
+    b'\x91'  # N
+    b'\x92'  # O
+    b'\x93'  # P
+    b'\x94'  # Q
+    b'\x95'  # R
+    b'\x96'  # S
+    b'\x97'  # T
+    b'\x98'  # U
+    b'\x99'  # V
+    b'\x9a'  # W
+    b'\x9b'  # X
+    b'\x9c'  # Y
+    b'\x9d'  # Z
     b'\x2f'  # [
     b'\x31'  # \ backslash
     b'\x30'  # ]
-    b'\x23'  # ^ (shift 6)
-    b'\x2d'  # _ (shift -)
+    b'\xa3'  # ^ (shift 6)
+    b'\xad'  # _ (shift -)
     b'\x35'  # `
     b'\x04'  # a
     b'\x05'  # b
@@ -436,10 +436,10 @@ ASCII_TO_KEYCODE = (
     b'\x1b'  # x
     b'\x1c'  # y
     b'\x1d'  # z
-    b'\x2f'  # { (shift [)
-    b'\x31'  # | (shift \)
-    b'\x30'  # } (shift ])
-    b'\x35'  # ~ (shift `)
+    b'\xaf'  # { (shift [)
+    b'\xb1'  # | (shift \)
+    b'\xb0'  # } (shift ])
+    b'\xb5'  # ~ (shift `)
     b'\x4c'  # DEL DELETE Forward
 )
 
@@ -497,7 +497,9 @@ def get_action_code(x):
     if type(x) is int:
         return x if x > 9 else ASCII_TO_KEYCODE[ord(str(x))]
     if type(x) is str and len(x) == 1:
-        return ASCII_TO_KEYCODE[ord(str(x))]
+        return ASCII_TO_KEYCODE[ord(x)] & 0x7F
+    if x is None:
+        return 0
     raise ValueError('Invalid keyname {}'.format(x))
 
 def MODS(*args):
@@ -509,6 +511,19 @@ def MODS(*args):
         mods |= MAP[m]
     return mods
 
+def mods_to_keycodes(mods):
+    # if mods & 0x10:
+    #     all_mods = (RCTRL, RSHIFT, RALT, RGUI)
+    # else:
+    #     all_mods = (LCTRL, LSHIFT, LALT, LGUI)
+    # return list(filter(lambda k: mods & (1 << (k & 0x3)), all_mods))
+
+    b = RCTRL if mods & 0x10 else LCTRL
+    o = []
+    for i in range(4):
+        if (mods >> i) & 1:
+            o.append(b + i)
+    return o
 
 ACTION = lambda kind, param: (kind << 12) | param
 
@@ -525,6 +540,64 @@ LAYER_TAP = lambda layer, key=NO: ACTION(ACT_LAYER_TAP, (layer << 8) | get_actio
 LAYER_TAP_TOGGLE = lambda layer: LAYER_TAP(layer, OP_TAP_TOGGLE)
 LAYER_MODS = lambda layer, mods: LAYER_TAP(layer, 0xC0 | mods)
 
-COMMAND = lambda id, opt: ACTION(ACT_COMMAND,  opt << 8 | id)
+ACTION_USAGE_SYSTEM = lambda n: ACTION(ACT_USAGE, n)
+ACTION_USAGE_CONSUMER = lambda n: ACTION(ACT_USAGE, 1 << 10 | (n))
+ACTION_MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
+
+MACRO = lambda n: ACTION(ACT_MACRO, n)
+
+COMMAND = lambda opt, n: ACTION(ACT_COMMAND,  opt << 8 | n)
 
 BOOTLOADER = COMMAND(0, 0)
+HEATMAP = COMMAND(0, 1)
+SUSPEND = COMMAND(0, 2)
+SHUTDOWN = COMMAND(0, 3)
+USB_TOGGLE = COMMAND(0, 4)
+
+BT = lambda n: COMMAND(1, n)
+BT0 = BT(0)
+BT1 = BT(1)
+BT2 = BT(2)
+BT3 = BT(3)
+BT4 = BT(4)
+BT5 = BT(5)
+BT6 = BT(6)
+BT7 = BT(7)
+BT8 = BT(8)
+BT9 = BT(9)
+BT_TOGGLE = BT(0xFF)
+BT_ON = BT(0xFE)
+BT_OFF = BT(0xFD)
+
+# Consumer Page(0x0C)
+AUDIO_MUTE =                ACTION_USAGE_CONSUMER(0x00E2)
+AUDIO_VOL_UP =              ACTION_USAGE_CONSUMER(0x00E9)
+AUDIO_VOL_DOWN =            ACTION_USAGE_CONSUMER(0x00EA)
+TRANSPORT_NEXT_TRACK =      ACTION_USAGE_CONSUMER(0x00B5)
+TRANSPORT_PREV_TRACK =      ACTION_USAGE_CONSUMER(0x00B6)
+TRANSPORT_STOP =            ACTION_USAGE_CONSUMER(0x00B7)
+TRANSPORT_STOP_EJECT =      ACTION_USAGE_CONSUMER(0x00CC)
+TRANSPORT_PLAY_PAUSE =      ACTION_USAGE_CONSUMER(0x00CD)
+# application launch
+APPLAUNCH_CC_CONFIG =       ACTION_USAGE_CONSUMER(0x0183)
+APPLAUNCH_EMAIL =           ACTION_USAGE_CONSUMER(0x018A)
+APPLAUNCH_CALCULATOR =      ACTION_USAGE_CONSUMER(0x0192)
+APPLAUNCH_LOCAL_BROWSER =   ACTION_USAGE_CONSUMER(0x0194)
+# application control
+APPCONTROL_SEARCH =         ACTION_USAGE_CONSUMER(0x0221)
+APPCONTROL_HOME =           ACTION_USAGE_CONSUMER(0x0223)
+APPCONTROL_BACK =           ACTION_USAGE_CONSUMER(0x0224)
+APPCONTROL_FORWARD =        ACTION_USAGE_CONSUMER(0x0225)
+APPCONTROL_STOP =           ACTION_USAGE_CONSUMER(0x0226)
+APPCONTROL_REFRESH =        ACTION_USAGE_CONSUMER(0x0227)
+APPCONTROL_BOOKMARKS =      ACTION_USAGE_CONSUMER(0x022A)
+# supplement for Bluegiga iWRAP HID(not supported by Windows?)
+APPLAUNCH_LOCK =            ACTION_USAGE_CONSUMER(0x019E)
+TRANSPORT_RECORD =          ACTION_USAGE_CONSUMER(0x00B2)
+TRANSPORT_FAST_FORWARD =    ACTION_USAGE_CONSUMER(0x00B3)
+TRANSPORT_REWIND =          ACTION_USAGE_CONSUMER(0x00B4)
+TRANSPORT_EJECT =           ACTION_USAGE_CONSUMER(0x00B8)
+APPCONTROL_MINIMIZE =       ACTION_USAGE_CONSUMER(0x0206)
+# https://docs.microsoft.com/en-us/windows-hardware/drivers/hid/display-brightness-control
+DISPLAY_BRIGHTNESS_UP =     ACTION_USAGE_CONSUMER(0x006F)
+DISPLAY_BRIGHTNESS_DOWN =   ACTION_USAGE_CONSUMER(0x0070)

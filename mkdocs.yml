@@ -1,0 +1,143 @@
+# Copyright (c) 2020 makerdiary.com
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Project information
+site_name: M60 Keyboard
+site_description: The documentation offers all you need to start using M60 Keyboard.
+site_author: makerdiary
+site_url: https://wiki.makerdiary.com/python-keyboard
+
+# Repository
+repo_name: makerdiary/python-keyboard
+repo_url: https://github.com/makerdiary/python-keyboard
+edit_uri: ""
+
+# Copyright
+copyright: 'Copyright &copy; 2020 <a href="https://wiki.makerdiary.com" target="_blank">wiki.makerdiary.com</a>'
+
+# Configuration
+theme:
+  name: null
+  custom_dir: 'mkdocs-material/material'
+
+  # 404 page
+  static_templates:
+    - 404.html
+
+  # Don't include MkDocs' JavaScript
+  include_search_page: false
+  search_index_only: true
+
+  # Default values, taken from mkdocs_theme.yml
+  language: en
+  features:
+    - tabs
+    #- instant
+  palette:
+    scheme: default
+    primary: red-bud
+    accent: red-bud
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    logo: logo
+  favicon: assets/images/favicon.png
+
+# Plugins
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/shopify
+      link: https://store.makerdiary.com
+    - icon: fontawesome/brands/github
+      link: https://github.com/makerdiary
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/makerdiary
+    - icon: fontawesome/brands/discourse
+      link: https://community.makerdiary.com
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/channel/UCX4nJNlsyj9VJeQOHgOs0yg
+    - icon: fontawesome/brands/medium
+      link: https://medium.com/makerdiary
+    - icon: fontawesome/brands/zhihu
+      link: https://zhuanlan.zhihu.com/makerdiary
+
+
+#  disqus: 'makerdiary'
+#  discourse: 'community.makerdiary.com’
+
+# Extensions
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.attr_list
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  #- pymdownx.highlight:
+  #    linenums_style: pymdownx-inline
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: makerdiary
+      repo: mx-keyboard
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Page tree
+nav:
+  - Introduction: index.md
+  - Getting started: getting-started.md
+  - Configuration: configuration.md
+  - Macro: macro.md
+  - Pair-Keys: pair-keys.md
+  - Upgrade: upgrade_firmware.md
+  - Contributing: CONTRIBUTING.md
+
+# Google Analytics
+google_analytics:
+  - 'UA-54344624-2'
+  - auto

@@ -4,6 +4,8 @@ M60 is a compact keyboard. It has a keymap composed of multiple layers, which is
 
 ![](https://gitee.com/makerdiary/python-keyboard/raw/resource/img/layer0.svg)
 
+## Keymap
+
 As the 60% keyboard lacks a lot of keys such as F1~F12 and arrow keys, <kbd>Fn</kbd> is used to activate a new layer.
 When holding <kbd>Fn</kbd> down, the following keys are activated.
 
@@ -15,7 +17,7 @@ When holding <kbd>Fn</kbd> down, the following keys are activated.
 
 Except <kbd>Fn</kbd>, a normal key can be used as a Tap-key,  which is holding a key down to activate an alternate function.
 
-## Using <kbd>B</kbd> to configure Bluetooth and USB
+### Using <kbd>B</kbd> to configure Bluetooth and USB
 
 <kbd>B</kbd> is used as a Tap-key to configure Bluetooth and USB. Taping <kbd>B</kbd> outputs `b` (press & release quickly). Holding <kbd>B</kbd> down activates another new layer. With the layer, the following functions are available:
 
@@ -36,7 +38,7 @@ Except <kbd>Fn</kbd>, a normal key can be used as a Tap-key,  which is holding a
 + <kbd>D</kbd> + <kbd>U</kbd> → <kbd>PgUp</kbd>
 + <kbd>D</kbd> + <kbd>N</kbd> → <kbd>PgDn</kbd>
 
-## Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
+### Using <kbd>;</kbd> as <kbd>Ctrl</kbd>
 
 <kbd>;</kbd> is another type of Tap-key. Taping <kbd>;</kbd> outputs `;`. However, holding <kbd>;</kbd> down outputs `Ctrl` instead of activating a layer.
 
@@ -48,7 +50,7 @@ Except <kbd>Fn</kbd>, a normal key can be used as a Tap-key,  which is holding a
 + <kbd>;</kbd> + <kbd>a</kbd> = <kbd>Ctrl</kbd> + <kbd>a</kbd>
 
 
-### Using Pair-keys
+## Using Pair-keys
 
 Simultaneously pressing two keys (interval less than 10ms) activates an alternate function.
 By default, <kbd>J</kbd> <kbd>K</kbd> are used as a pair-keys. When simultaneously pressing <kbd>J</kbd> and <kbd>K</kbd> in a text editor, it will output a pre-defined string.

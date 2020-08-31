@@ -1,5 +1,7 @@
 # M60 Mechanical Keyboard
 
+ **En** | [中文][1]
+
 M60 is a hot-swappable 60% Keyboard with USB, BLE 5.0 and RGB backlight. It is highly configurable and extensible.
 It can run Python code saved in its USB storage, which makes it super powerful. It has very low power consumption and only needs about 160uA current when connected to a computer via Bluetooth. It is one of the lowest latency USB keyboards.
 
@@ -34,3 +36,5 @@ It can run Python code saved in its USB storage, which makes it super powerful. 
 |Battery Connector| JST 1.25mm 3-Pin                                                                  |
 | RF Antennas     | 2.4GHz Cabled PCB Antenna, NFC Cabled PCB Antenna                                 |
 | Dimensions      | 285 mm x 94.6 mm                                                                  |
+
+[1]: https://gitee.com/makerdiary/python-keyboard/wikis/pages

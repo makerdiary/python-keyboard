@@ -52,7 +52,7 @@ Hand-wiring a keyboard
 
 ## Setup Python
 
-1.  Follow [the guide - How to Program Pitaya Go](https://wiki.makerdiary.com/pitaya-go/programming/) to flash [CircuitPython firmware](firmware/circuitpython-5.3.0-pitaya-go.hex)
+1.  Follow [the guide - How to Program Pitaya Go](https://wiki.makerdiary.com/pitaya-go/programming/) to flash [CircuitPython firmware](https://github.com/makerdiary/python-keyboard/blob/master/circuitpython-5.3.0-for-pitaya-go.hex)
 2.  Download two CircuitPython libraries - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID) and put them into the `lib` directory of the USB drive named CIRCUITPY.
 
     ```

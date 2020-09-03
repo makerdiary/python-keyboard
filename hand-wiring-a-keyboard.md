@@ -54,7 +54,7 @@ Hand-wiring a Keyboard
 
 ## 键盘里跑Python
 
-1.  参考 [Pitaya Go 下载教程](https://wiki.makerdiary.com/pitaya-go/programming/) 更新 [CircuitPython 固件](firmware/circuitpython-5.3.0-pitaya-go.hex)，固件更新之后，Pitaya Go 会在电脑端模拟出一个名为 `CIRCUITPY` 的 U 盘和一个串口
+1.  参考 [Pitaya Go 下载教程](https://wiki.makerdiary.com/pitaya-go/programming/) 更新 [CircuitPython 固件](https://gitee.com/makerdiary/python-keyboard/raw/master/circuitpython-5.3.0-for-pitaya-go.hex)，固件更新之后，Pitaya Go 会在电脑端模拟出一个名为 `CIRCUITPY` 的 U 盘和一个串口
 2.  下载两个 CircuitPython 库 - [adafruit-ble](https://github.com/adafruit/Adafruit_CircuitPython_BLE) & [adafruit-hid](https://github.com/adafruit/Adafruit_CircuitPython_HID)，然后它们放在 `CIRCUITPY` U 盘的 `lib` 目录，U 盘内容结构，如下：
 
     ```

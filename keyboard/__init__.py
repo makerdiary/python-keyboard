@@ -32,7 +32,7 @@ KEYMAP = (
     (
         ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
         TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
-        CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
+        CAPS,  A,   S,   D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
         LSHIFT,Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',        RSHIFT,
         LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
     ),
@@ -136,6 +136,7 @@ class Device:
 class Keyboard:
     def __init__(self, keymap=KEYMAP, pairs=(), verbose=True):
         self.keymap = KEYMAP
+        self.profiles = {}
         self.pairs = pairs
         self.verbose = verbose
         self.pairs_handler = None
@@ -194,14 +195,22 @@ class Keyboard:
             self.leds = leds
             self.backlight.set_hid_leds(leds)
             self.log('keyboard leds {}'.format(bin(leds)))
-
+        
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
         self.actonmap = tuple(convert(layer) for layer in self.keymap)
+        self.action_maps = {}
+        for key in self.profiles:
+            self.action_maps[key] = tuple(convert(layer) for layer in self.profiles[key])
 
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
+
+    def get_actionmap(self):
+        if self.current_channel() in self.action_maps:
+            return self.action_maps[self.current_channel()]
+        return self.actonmap
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
@@ -225,7 +234,7 @@ class Keyboard:
 
         if 0 > n or n > 9:
             return
-
+        
         uid = self.uid[n:n+6]
         uid[-1] = uid[-1] | 0xC0
         address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
@@ -242,6 +251,7 @@ class Keyboard:
             print(e)
         self.log(self.ble._adapter.address)
         self.start_advertising()
+        print(self.current_channel())
 
     def toggle_bt(self):
         if self.ble.connected:
@@ -251,17 +261,24 @@ class Keyboard:
             self.stop_advertising()
         else:
             self.start_advertising()
+        print(self.current_channel())
+
+    def current_channel(self):
+        if self.ble.connected:
+            return "BT%d" % self.ble_id
+        return "USB"
 
     def toggle_usb(self):
         if usb_is_connected():
             self.usb_status = 1 if self.usb_status == 3 else 3
+        print(self.current_channel())
 
     def action_code(self, position):
         position = COORDS[position]
         layer_mask = self.layer_mask
-        for layer in range(len(self.actonmap) - 1, -1, -1):
+        for layer in range(len(self.get_actionmap()) - 1, -1, -1):
             if (layer_mask >> layer) & 1:
-                code = self.actonmap[layer][position]
+                code = self.get_actionmap()[layer][position]
                 if code == 1:   # TRANSPARENT
                     continue
                 return code

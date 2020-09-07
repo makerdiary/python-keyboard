@@ -62,6 +62,52 @@ keyboard.keymap = (
     ),
 )
 
+# Use different keymaps on different connections
+# Valid keys are "USB" and "BT0"-"BT9"
+keyboard.profiles = {
+    "BT1": (
+        # layer 0
+        (
+            ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
+            TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
+            L2CAP, A,   S,   D,   F,   G,   H,   J,   K,   L, ';', '"',    ENTER,
+            LSFT4, Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',         RSFT4,
+            LCTRL, LALT,LGUI5,          SPACE,            MENU, RALT,  L1, RCTRL
+        ),
+
+        # layer 1
+        (
+            '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
+            ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___,SUSPEND,___,___,___,
+            ___,LEFT,DOWN,RIGHT,___, ___, ___, ___, ___, ___, ___, ___,      ___,
+            ___, ___, ___, ___, ___,BOOT, ___,MACRO(1), ___, ___, ___,       ___,
+            ___, ___, ___,                ___,               ___, ___, ___,  ___
+        ),
+
+        # Other layers...
+    ),
+    "BT2": (
+        # layer 0
+        (
+            ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
+            TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
+            L2CAP, A,   S,   D,   F,   G,   H,   J,   K,   L, ';', '"',    ENTER,
+            LSFT4, Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',         RSFT4,
+            LCTRL, LALT,LGUI5,          SPACE,            MENU, RALT,  L1, RCTRL
+        ),
+
+        # layer 1
+        (
+            '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
+            ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___,SUSPEND,___,___,___,
+            ___,LEFT,DOWN,RIGHT,___, ___, ___, ___, ___, ___, ___, ___,      ___,
+            ___, ___, ___, ___, ___,BOOT, ___,MACRO(2), ___, ___, ___,       ___,
+            ___, ___, ___,                ___,               ___, ___, ___,  ___
+        ),
+
+        # Other layers...
+    )
+}
 
 def macro_handler(dev, n, is_down):
     if is_down:

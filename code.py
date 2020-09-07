@@ -64,6 +64,7 @@ keyboard.keymap = (
 
 # Use different keymaps on different connections
 # Valid keys are "USB" and "BT0"-"BT9"
+# Connection not in this map will use default keymap defined above.
 keyboard.profiles = {
     "BT1": (
         # layer 0

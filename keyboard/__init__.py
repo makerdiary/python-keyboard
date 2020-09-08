@@ -10,10 +10,11 @@ import usb_hid
 import adafruit_ble
 from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
+from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
 from .hid import HID
-from .model import Matrix, COORDS, Backlight
+from .model import Matrix, COORDS, Backlight, battery_level
 from .action_code import *
 
 
@@ -160,7 +161,10 @@ class Keyboard:
         self.heatmap = memoryview(self.data)[4:]
 
         ble_hid = HIDService()
-        self.advertisement = ProvideServicesAdvertisement(ble_hid)
+        self.battery = BatteryService()
+        self.battery.level = battery_level()
+        self.battery_update_time = time.time() + 360
+        self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
         self.ble = adafruit_ble.BLERadio()
         self.change_bt(self.ble_id)
@@ -216,6 +220,11 @@ class Keyboard:
             self.backlight.set_hid_leds(leds)
             self.log('keyboard leds {}'.format(bin(leds)))
         self.update_current_conn()
+
+        # update battery level
+        if time.time() > self.battery_update_time:
+            self.battery_update_time = time.time() + 360
+            self.battery.level = battery_level()
         
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))

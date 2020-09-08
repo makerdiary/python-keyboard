@@ -456,28 +456,25 @@ class Keyboard:
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = (action_code >> 8) & 0x1F
                             mask = 1 << layer
-                            if is_tapped(matrix, key):
+                            if action_code & 0xE0 == 0xC0:
+                                log("LAYER_MODS")
+                                mods = action_code & 0x1F
+                                keycodes = mods_to_keycodes(mods)
+                                self.press(*keycodes)
+                                self.layer_mask |= mask
+                            elif is_tapped(matrix, key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
-                                if keycode & 0xE0 == 0xC0:
-                                    log("LAYER_MODS")
-                                    mods = keycode & 0x1F
-                                    keycodes = mods_to_keycodes(mods)
-                                    self.press(*keycodes)
-                                elif keycode != OP_TAP_TOGGLE:
-                                    keys[key] = keycode
-                                    self.press(keycode)
-                                else:
-                                    log("toggle {}".format(self.layer_mask))
+                                if keycode == OP_TAP_TOGGLE:
+                                    log("TOGGLE {}".format(layer))
                                     self.layer_mask = (self.layer_mask & ~mask) | (
                                         mask & ~self.layer_mask
                                     )
+                                    keys[key] = 0
+                                else:
+                                    keys[key] = keycode
+                                    self.press(keycode)
                             else:
-                                if action_code & 0xE0 == 0xC0:
-                                    log("LAYER_MODS")
-                                    mods = action_code & 0x1F
-                                    keycodes = mods_to_keycodes(mods)
-                                    self.press(*keycodes)
                                 self.layer_mask |= mask
 
                             log("layers {}".format(self.layer_mask))
@@ -537,14 +534,13 @@ class Keyboard:
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = (action_code >> 8) & 0x1F
                             keycode = action_code & 0xFF
-                            if keycode != OP_TAP_TOGGLE:
-                                if keycode & 0xE0 == 0xC0:
-                                    log("LAYER_MODS")
-                                    mods = keycode & 0x1F
-                                    keycodes = mods_to_keycodes(mods)
-                                    self.release(*keycodes)
-                                self.layer_mask &= ~(1 << layer)
-                                log("layers {}".format(self.layer_mask))
+                            if keycode & 0xE0 == 0xC0:
+                                log("LAYER_MODS")
+                                mods = keycode & 0x1F
+                                keycodes = mods_to_keycodes(mods)
+                                self.release(*keycodes)
+                            self.layer_mask &= ~(1 << layer)
+                            log("layers {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
                             if callable(self.macro_handler):
                                 i = action_code & 0xFFF

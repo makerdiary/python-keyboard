@@ -32,7 +32,7 @@ KEYMAP = (
     (
         ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
         TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
-        CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
+        CAPS,  A,   S,   D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
         LSHIFT,Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',        RSHIFT,
         LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
     ),
@@ -136,6 +136,7 @@ class Device:
 class Keyboard:
     def __init__(self, keymap=KEYMAP, pairs=(), verbose=True):
         self.keymap = KEYMAP
+        self.profiles = {}
         self.pairs = pairs
         self.verbose = verbose
         self.pairs_handler = None
@@ -147,6 +148,8 @@ class Keyboard:
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
         self.leds = None
+
+        self._current_conn = ""
 
         self.data = array.array('L', microcontroller.nvm[:272])
         if self.data[0] != 0x424b5950:
@@ -164,15 +167,32 @@ class Keyboard:
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
 
+    def update_current_conn(self):
+        if usb_is_connected() and self.usb_status == 3:
+            conn = "USB"
+        elif self.ble.connected:
+            conn = "BT%d" % self.ble_id
+        else:
+            conn = ""
+        if conn != self._current_conn:
+            self._current_conn = conn
+            if conn in self.action_maps:
+                self.current_keymap = self.action_maps[self._current_conn]
+            else:
+                self.current_keymap = self.actonmap
+            print("Current connection changed to %s" % self._current_conn)
+
     def check(self):
         if  self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
                 self.backlight.set_bt_led(None)
-
                 for c in self.ble.connections:
-                    if c.connection_interval > 11.25:
-                        c.connection_interval = 11.25
+                    try:
+                        if c.connection_interval > 11.25:
+                            c.connection_interval = 11.25
+                    except _bleio.BluetoothError:
+                        self.log("failed to set ble connection interval")
                     self.log('ble connection interval {}'.format(c.connection_interval))
             elif time.time() > self.adv_timeout:
                 self.stop_advertising()
@@ -194,14 +214,20 @@ class Keyboard:
             self.leds = leds
             self.backlight.set_hid_leds(leds)
             self.log('keyboard leds {}'.format(bin(leds)))
-
+        self.update_current_conn()
+        
     def setup(self):
         convert = lambda a: array.array('H', (get_action_code(k) for k in a))
         self.actonmap = tuple(convert(layer) for layer in self.keymap)
 
+        self.action_maps = {}
+        for key in self.profiles:
+            self.action_maps[key] = tuple(convert(layer) for layer in self.profiles[key])
+
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
+        self.update_current_conn()
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
@@ -251,17 +277,22 @@ class Keyboard:
             self.stop_advertising()
         else:
             self.start_advertising()
+        self.update_current_conn()
 
     def toggle_usb(self):
         if usb_is_connected():
-            self.usb_status = 1 if self.usb_status == 3 else 3
+            if self.usb_status == 1:
+                self.usb_status = 3
+            else:
+                self.usb_status = 1
+        self.update_current_conn()
 
     def action_code(self, position):
         position = COORDS[position]
         layer_mask = self.layer_mask
-        for layer in range(len(self.actonmap) - 1, -1, -1):
+        for layer in range(len(self.current_keymap) - 1, -1, -1):
             if (layer_mask >> layer) & 1:
-                code = self.actonmap[layer][position]
+                code = self.current_keymap[layer][position]
                 if code == 1:   # TRANSPARENT
                     continue
                 return code

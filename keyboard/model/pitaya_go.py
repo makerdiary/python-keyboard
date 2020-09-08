@@ -1,3 +1,4 @@
+# fmt: off
 
 from ..matrix import Matrix
 from board import P27, P13, P30, P20, P3, P26, P31, P29, P28, P5, P4, P24, P25, P23, P22, P14, P15, P16, P17

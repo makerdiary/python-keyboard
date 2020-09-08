@@ -1,8 +1,6 @@
-
-
-
 import digitalio
 import time
+
 # from microcontroller.pin import *
 
 
@@ -20,7 +18,7 @@ class Matrix:
         self.tail = 0
         self.length = 0
 
-        self.rows = []                                # row as output
+        self.rows = []  # row as output
         for pin in self.ROWS:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.OUTPUT
@@ -28,7 +26,7 @@ class Matrix:
             io.value = 0
             self.rows.append(io)
 
-        self.cols = []                                # col as input
+        self.cols = []  # col as input
         for pin in self.COLS:
             io = digitalio.DigitalInOut(pin)
             io.direction = digitalio.Direction.INPUT
@@ -37,8 +35,8 @@ class Matrix:
 
         # row selected value depends on diodes' direction
         self.pressed = bool(self.ROW2COL)
-        self.t0 = [0] * self.keys                   # key pressed time
-        self.t1 = [0] * self.keys                   # key released time
+        self.t0 = [0] * self.keys  # key pressed time
+        self.t1 = [0] * self.keys  # key released time
         self.mask = 0
         self.count = 0
         self._debounce_time = 20000000
@@ -55,38 +53,38 @@ class Matrix:
         count = 0
         key_index = -1
         for row in self.rows:
-            row.value = pressed           # select row
+            row.value = pressed  # select row
             for col in cols:
                 key_index += 1
                 if col.value == pressed:
                     key_mask = 1 << key_index
                     if not (last_mask & key_mask):
                         if t - self.t1[key_index] < self._debounce_time:
-                            print('debonce')
+                            print("debonce")
                             continue
-                            
+
                         self.t0[key_index] = t
                         self.put(key_index)
-                        
+
                     mask |= key_mask
                     count += 1
                 elif last_mask and (last_mask & (1 << key_index)):
                     if t - self.t0[key_index] < self._debounce_time:
-                        print('debonce')
+                        print("debonce")
                         mask |= 1 << key_index
                         continue
-                        
+
                     self.t1[key_index] = t
                     self.put(0x80 | key_index)
 
             row.value = not pressed
         self.mask = mask
         self.count = count
-        
+
         return self.length
 
     def wait(self, timeout=0):
-        last = self.length 
+        last = self.length
         if timeout:
             end_time = time.monotonic_ns() + timeout * 1000000
             while True:

@@ -1,4 +1,3 @@
-
 import array
 import time
 import struct
@@ -25,9 +24,9 @@ L2D = LAYER_TAP(2, D)
 L3B = LAYER_TAP(3, B)
 
 # Semicolon & Ctrl
-SCC = MODS_TAP(MODS(RCTRL), ';')
+SCC = MODS_TAP(MODS(RCTRL), ";")
 
-
+# fmt: off
 KEYMAP = (
     # layer 0
     (
@@ -65,13 +64,17 @@ KEYMAP = (
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 )
+# fmt: on
+
 
 @micropython.asm_thumb
 def mem(r0):
     ldr(r0, [r0, 0])
 
+
 def usb_is_connected():
     return mem(0x40000438) == 0x3
+
 
 def reset_into_bootloader():
     microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
@@ -87,7 +90,9 @@ def is_tapped(matrix, key):
         if target == matrix.view(0):
             return True
         else:
-            n = matrix.wait(200 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+            n = matrix.wait(
+                200 - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+            )
     if n == 2 and target == matrix.view(1):
         return True
 
@@ -152,11 +157,12 @@ class Keyboard:
 
         self._current_conn = ""
 
-        self.data = array.array('L', microcontroller.nvm[:272])
-        if self.data[0] != 0x424b5950:
-            self.data[0] = 0x424b5950
+        self.data = array.array("L", microcontroller.nvm[:272])
+        if self.data[0] != 0x424B5950:
+            self.data[0] = 0x424B5950
             self.data[1] = 1
-            for i in range(4, 68): self.data[i] = 0
+            for i in range(4, 68):
+                self.data[i] = 0
         self.ble_id = self.data[1]
         self.heatmap = memoryview(self.data)[4:]
 
@@ -188,7 +194,7 @@ class Keyboard:
             self.layer_mask = 1
 
     def check(self):
-        if  self.adv_timeout:
+        if self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
                 self.backlight.set_bt_led(None)
@@ -219,21 +225,23 @@ class Keyboard:
         if leds != self.leds:
             self.leds = leds
             self.backlight.set_hid_leds(leds)
-            self.log('keyboard leds {}'.format(bin(leds)))
+            self.log("keyboard leds {}".format(bin(leds)))
         self.update_current_conn()
 
         # update battery level
         if time.time() > self.battery_update_time:
             self.battery_update_time = time.time() + 360
             self.battery.level = battery_level()
-        
+
     def setup(self):
-        convert = lambda a: array.array('H', (get_action_code(k) for k in a))
+        convert = lambda a: array.array("H", (get_action_code(k) for k in a))
         self.actonmap = tuple(convert(layer) for layer in self.keymap)
 
         self.action_maps = {}
         for key in self.profiles:
-            self.action_maps[key] = tuple(convert(layer) for layer in self.profiles[key])
+            self.action_maps[key] = tuple(
+                convert(layer) for layer in self.profiles[key]
+            )
 
         for pair in self.pairs:
             for key in pair:
@@ -263,18 +271,18 @@ class Keyboard:
         if 0 > n or n > 9:
             return
 
-        uid = self.uid[n:n+6]
+        uid = self.uid[n : n + 6]
         uid[-1] = uid[-1] | 0xC0
         address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
         try:
             self.ble._adapter.address = address
-            name = 'PYKB {}'.format(n)
+            name = "PYKB {}".format(n)
             self.advertisement.complete_name = name
             self.ble.name = name
             self.ble_id = n
             if self.data[1] != n:
                 self.data[1] = n
-                microcontroller.nvm[:272] = struct.pack('68L', *self.data)
+                microcontroller.nvm[:272] = struct.pack("68L", *self.data)
         except Exception as e:
             print(e)
         self.log(self.ble._adapter.address)
@@ -304,7 +312,7 @@ class Keyboard:
         for layer in range(len(self.current_keymap) - 1, -1, -1):
             if (layer_mask >> layer) & 1:
                 code = self.current_keymap[layer][position]
-                if code == 1:   # TRANSPARENT
+                if code == 1:  # TRANSPARENT
                     continue
                 return code
         return 0
@@ -384,7 +392,9 @@ class Keyboard:
             if n == 1:
                 key = matrix.view(0)
                 if key < 0x80 and key in self.pair_keys:
-                    n = matrix.wait(10 - ms(matrix.time() - matrix.get_keydown_time(key)))
+                    n = matrix.wait(
+                        10 - ms(matrix.time() - matrix.get_keydown_time(key))
+                    )
 
             if n >= 2:
                 pair = {matrix.view(0), matrix.view(1)}
@@ -393,8 +403,10 @@ class Keyboard:
                     key1 = self.get()
                     key2 = self.get()
 
-                    dt = ms(matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1))
-                    log('pair keys {} {}, dt = {}'.format(pair_index, pair, dt))
+                    dt = ms(
+                        matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
+                    )
+                    log("pair keys {} {}, dt = {}".format(pair_index, pair, dt))
                     if callable(self.pairs_handler):
                         try:
                             self.pairs_handler(dev, pair_index)
@@ -412,7 +424,7 @@ class Keyboard:
                         self.press(action_code)
                         if self.verbose:
                             dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                            log('{} \\ {} latency {}'.format(key, hex(action_code), dt))
+                            log("{} \\ {} latency {}".format(key, hex(action_code), dt))
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -424,7 +436,7 @@ class Keyboard:
                         elif kind < ACT_USAGE:
                             # MODS_TAP
                             if is_tapped(matrix, key):
-                                log('TAP')
+                                log("TAP")
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
                                 self.press(keycode)
@@ -439,13 +451,13 @@ class Keyboard:
                             # todo
                             pass
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
-                            layer = ((action_code >> 8) & 0x1F)
+                            layer = (action_code >> 8) & 0x1F
                             mask = 1 << layer
                             if is_tapped(matrix, key):
-                                log('TAP')
+                                log("TAP")
                                 keycode = action_code & 0xFF
                                 if keycode & 0xE0 == 0xC0:
-                                    log('LAYER_MODS')
+                                    log("LAYER_MODS")
                                     mods = keycode & 0x1F
                                     keycodes = mods_to_keycodes(mods)
                                     self.press(*keycodes)
@@ -453,17 +465,19 @@ class Keyboard:
                                     keys[key] = keycode
                                     self.press(keycode)
                                 else:
-                                    log('toggle {}'.format(self.layer_mask))
-                                    self.layer_mask = (self.layer_mask & ~mask) | (mask & ~self.layer_mask)
+                                    log("toggle {}".format(self.layer_mask))
+                                    self.layer_mask = (self.layer_mask & ~mask) | (
+                                        mask & ~self.layer_mask
+                                    )
                             else:
                                 if action_code & 0xE0 == 0xC0:
-                                    log('LAYER_MODS')
+                                    log("LAYER_MODS")
                                     mods = action_code & 0x1F
                                     keycodes = mods_to_keycodes(mods)
                                     self.press(*keycodes)
                                 self.layer_mask |= mask
 
-                            log('layers {}'.format(self.layer_mask))
+                            log("layers {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
                             if callable(self.macro_handler):
                                 i = action_code & 0xFFF
@@ -479,7 +493,9 @@ class Keyboard:
                             elif action_code == SHUTDOWN:
                                 microcontroller.reset()
                             elif action_code == HEATMAP:
-                                microcontroller.nvm[:272] = struct.pack('68L', *self.data)
+                                microcontroller.nvm[:272] = struct.pack(
+                                    "68L", *self.data
+                                )
                                 if usb_is_connected():
                                     microcontroller.reset()
                             elif action_code == USB_TOGGLE:
@@ -488,11 +504,11 @@ class Keyboard:
                                 self.toggle_bt()
                             elif BT(0) <= action_code and action_code <= BT(9):
                                 i = action_code - BT(0)
-                                log('switch to bt {}'.format(i))
+                                log("switch to bt {}".format(i))
                                 self.change_bt(i)
 
                         dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                        log('{} \\ {} latency {}'.format(key, hex(keys[key]), dt))
+                        log("{} \\ {} latency {}".format(key, hex(keys[key]), dt))
                 else:
                     action_code = keys[key]
                     if action_code < 0xFF:
@@ -516,16 +532,16 @@ class Keyboard:
                         elif kind == ACT_MOUSEKEY:
                             pass
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
-                            layer = ((action_code >> 8) & 0x1F)
+                            layer = (action_code >> 8) & 0x1F
                             keycode = action_code & 0xFF
                             if keycode != OP_TAP_TOGGLE:
                                 if keycode & 0xE0 == 0xC0:
-                                    log('LAYER_MODS')
+                                    log("LAYER_MODS")
                                     mods = keycode & 0x1F
                                     keycodes = mods_to_keycodes(mods)
                                     self.release(*keycodes)
                                 self.layer_mask &= ~(1 << layer)
-                                log('layers {}'.format(self.layer_mask))
+                                log("layers {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
                             if callable(self.macro_handler):
                                 i = action_code & 0xFFF
@@ -536,5 +552,4 @@ class Keyboard:
 
                     if self.verbose:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))
-                        log('{} / {} latency {}'.format(key, hex(action_code), dt))
-
+                        log("{} / {} latency {}".format(key, hex(action_code), dt))

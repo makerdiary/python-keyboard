@@ -1,12 +1,15 @@
-
 import struct
 
 
 def find_device(devices, usage_page, usage):
     for device in devices:
-        if device.usage_page == usage_page and device.usage == usage and hasattr(device, 'send_report'):
+        if (
+            device.usage_page == usage_page
+            and device.usage == usage
+            and hasattr(device, "send_report")
+        ):
             return device
-    raise ValueError('Not found')
+    raise ValueError("Not found")
 
 
 class HID:
@@ -24,7 +27,11 @@ class HID:
         self.report_keys = memoryview(self.report)[2:]
 
         for device in devices:
-            if  device.usage_page == 0x1 and device.usage == 0x6 and hasattr(device, 'report'):
+            if (
+                device.usage_page == 0x1
+                and device.usage == 0x6
+                and hasattr(device, "report")
+            ):
                 self._leds = device
                 break
         else:
@@ -32,7 +39,7 @@ class HID:
 
     def press(self, *keycodes):
         for keycode in keycodes:
-            if 0xe0 <= keycode and keycode < 0xe8:
+            if 0xE0 <= keycode and keycode < 0xE8:
                 self.report[0] |= 1 << (keycode & 0x7)
                 continue
 
@@ -48,7 +55,7 @@ class HID:
 
     def release(self, *keycodes):
         for keycode in keycodes:
-            if 0xe0 <= keycode and keycode < 0xe8:
+            if 0xE0 <= keycode and keycode < 0xE8:
                 self.report[0] &= ~(1 << (keycode & 0x7))
                 continue
 

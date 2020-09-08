@@ -1,10 +1,11 @@
+# fmt: off
 
 import analogio
 import microcontroller
 from .is32fl3733 import IS31FL3733
 
 try:
-    # using built-in matrix if it is available
+    # usebuilt-in matrix if it is available
     from matrix import Matrix
 except ImportError:
     from ..matrix import Matrix
@@ -43,6 +44,7 @@ BATTERY_VOLTAGE = (
 )
 
 battery_in = analogio.AnalogIn(microcontroller.pin.P0_02)
+
 
 def battery_level():
     # (3300 * 2 * battery.value) >> 16

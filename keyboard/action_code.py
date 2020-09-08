@@ -3,6 +3,7 @@
 # reference:
 #   + https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2
 #
+# fmt: off
 
 NO = '\x00'
 TRANSPARENT = '\x01'

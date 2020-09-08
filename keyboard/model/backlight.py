@@ -1,5 +1,3 @@
-
-
 class Backlight:
     def __init__(self):
         pass

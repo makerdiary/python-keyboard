@@ -1,4 +1,3 @@
-
 import board
 import busio
 import digitalio
@@ -69,15 +68,15 @@ class IS31FL3733:
         self.write(1, n)
 
     def pixel(self, i, r, g, b):
-        row = i >> 4    # i // 16
-        col = i & 15    # i % 16
+        row = i >> 4  # i // 16
+        col = i & 15  # i % 16
         self.pixels[row * 48 + col] = g
         self.pixels[row * 48 + 16 + col] = r
         self.pixels[row * 48 + 32 + col] = b
 
     def update_pixel(self, i, r, g, b):
-        row = i >> 4    # i // 16
-        col = i & 15    # i % 16
+        row = i >> 4  # i // 16
+        col = i & 15  # i % 16
         self.pixels[row * 48 + col] = g
         self.pixels[row * 48 + 16 + col] = r
         self.pixels[row * 48 + 32 + col] = b
@@ -95,7 +94,7 @@ class IS31FL3733:
         self.i2c.writeto(self.address, self._buffer)
 
     def any(self):
-        '''Check if any pixel is not zero'''
+        """Check if any pixel is not zero"""
         for pixel in self.pixels:
             if pixel > 0:
                 return True
@@ -119,9 +118,9 @@ class IS31FL3733:
         if not self.power.value:
             self.power.value = 1
         self.page(2)
-        row = i >> 4    # i // 16
-        col = i & 15    # i % 16
-        self.write(row * 48 + 32 + col, mode)    # blue
+        row = i >> 4  # i // 16
+        col = i & 15  # i % 16
+        self.write(row * 48 + 32 + col, mode)  # blue
         # self.write(row * 48 + col, mode)         # green
         # self.write(row * 48 + 16 + col, mode)    # red
 

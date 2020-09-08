@@ -174,10 +174,8 @@ class Keyboard:
     def update_current_conn(self):
         if usb_is_connected() and self.usb_status == 3:
             conn = "USB"
-        elif self.ble.connected:
-            conn = "BT%d" % self.ble_id
         else:
-            conn = ""
+            conn = "BT%d" % self.ble_id
         if conn != self._current_conn:
             self._current_conn = conn
             if conn in self.action_maps:
@@ -185,6 +183,9 @@ class Keyboard:
             else:
                 self.current_keymap = self.actonmap
             print("Current connection changed to %s" % self._current_conn)
+
+            # reset `layer_mask` when keymap is changed
+            self.layer_mask = 1
 
     def check(self):
         if  self.adv_timeout:

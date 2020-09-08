@@ -189,11 +189,12 @@ class Keyboard:
                 self.backlight.set_bt_led(None)
                 for c in self.ble.connections:
                     try:
-                        if c.connection_interval > 11.25:
-                            c.connection_interval = 11.25
-                    except _bleio.BluetoothError:
-                        self.log("failed to set ble connection interval")
-                    self.log('ble connection interval {}'.format(c.connection_interval))
+                        # 11.25 ms is the min connection interval for most systems
+                        c.connection_interval = 11.25
+                    except Exception:
+                        print("Failed to set ble connection interval")
+                    # Avoid getting connection_interval, as it may block forever
+                    # self.log('ble connection interval {}'.format(c.connection_interval))
             elif time.time() > self.adv_timeout:
                 self.stop_advertising()
 

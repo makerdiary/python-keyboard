@@ -69,6 +69,7 @@ KEYMAP = (
 
 @micropython.asm_thumb
 def mem(r0):
+    """Read memory from the address"""
     ldr(r0, [r0, 0])
 
 
@@ -82,6 +83,7 @@ def reset_into_bootloader():
 
 
 def is_tapped(matrix, key):
+    """Check if the key is tapped (press & release quickly)"""
     n = len(matrix)
     if n == 0:
         n = matrix.wait(500 - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
@@ -94,6 +96,7 @@ def is_tapped(matrix, key):
                 200 - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
             )
     if n == 2 and target == matrix.view(1):
+        # Fast typing: A down, B down, A up, B up
         return True
 
     return False

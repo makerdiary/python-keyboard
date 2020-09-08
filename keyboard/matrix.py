@@ -5,10 +5,16 @@ import time
 
 
 class Matrix:
+    """
+    Implement the drive of keyboard matrix and provide an event queue.
+    """
+
     # ROWS = (P0_05, P0_06, P0_07, P0_08, P1_09, P1_08, P0_12, P0_11)
     # COLS = (P0_19, P0_20, P0_21, P0_22, P0_23, P0_24, P0_25, P0_26)
     ROWS = ()
     COLS = ()
+
+    # direction of diode
     ROW2COL = False
 
     def __init__(self):
@@ -42,6 +48,11 @@ class Matrix:
         self._debounce_time = 20000000
 
     def scan(self):
+        """
+        Scan keyboard matrix and save key event into the queue.
+
+        :return: length of the key event queue.
+        """
         t = time.monotonic_ns()
 
         # use local variables to speed up
@@ -83,7 +94,8 @@ class Matrix:
 
         return self.length
 
-    def wait(self, timeout=0):
+    def wait(self, timeout=1000):
+        """Wait for a new key event or timeout"""
         last = self.length
         if timeout:
             end_time = time.monotonic_ns() + timeout * 1000000
@@ -98,6 +110,7 @@ class Matrix:
                     return n
 
     def put(self, data):
+        """Put a key event into the queue"""
         self.queue[self.head] = data
         self.head += 1
         if self.head >= self.keys:
@@ -105,6 +118,7 @@ class Matrix:
         self.length += 1
 
     def get(self):
+        """Remove and return the first event from the queue."""
         data = self.queue[self.tail]
         self.tail += 1
         if self.tail >= self.keys:
@@ -113,24 +127,31 @@ class Matrix:
         return data
 
     def view(self, n):
+        """Return the specified event"""
         return self.queue[(self.tail + n) % self.keys]
 
     def __getitem__(self, n):
+        """Return the specified event"""
         return self.queue[(self.tail + n) % self.keys]
 
     def __len__(self):
+        """Return the number of events in the queue"""
         return self.length
 
     def get_keydown_time(self, key):
+        """Return the key pressed time"""
         return self.t0[key]
 
     def get_keyup_time(self, key):
+        """Return the key released time"""
         return self.t1[key]
 
     def time(self):
+        """Return current time"""
         return time.monotonic_ns()
 
     def ms(self, t):
+        """Convert time to milliseconds"""
         return t // 1000000
 
     @property
@@ -139,7 +160,9 @@ class Matrix:
 
     @debounce_time.setter
     def debounce_time(self, t):
+        """Set debounce time"""
         self._debounce_time = t * 1000000
 
     def suspend(self):
+        """Suspend keyboard"""
         pass

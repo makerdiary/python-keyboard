@@ -139,6 +139,7 @@ class Keyboard:
         self.usb_status = 0
         self.leds = None
         self.tap_delay = 500
+        self.fast_type_thresh = 200
         self.pair_delay = 10
 
         self._current_conn = ""
@@ -247,7 +248,7 @@ class Keyboard:
         except Exception as e:
             print(e)
 
-    def is_tapped(self, matrix, key):
+    def is_tap_key(self, matrix, key):
         """Check if the key is tapped (press & release quickly)"""
         n = len(matrix)
         if n == 0:
@@ -258,7 +259,7 @@ class Keyboard:
                 return True
             else:
                 n = matrix.wait(
-                    200 - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+                    self.fast_type_thresh - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
                 )
         if n == 2 and target == matrix.view(1):
             # Fast typing: A down, B down, A up, B up
@@ -440,7 +441,7 @@ class Keyboard:
                             self.press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
-                            if self.is_tapped(matrix, key):
+                            if self.is_tap_key(matrix, key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
@@ -464,7 +465,7 @@ class Keyboard:
                                 keycodes = mods_to_keycodes(mods)
                                 self.press(*keycodes)
                                 self.layer_mask |= mask
-                            elif self.is_tapped(matrix, key):
+                            elif self.is_tap_key(matrix, key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
                                 if keycode == OP_TAP_TOGGLE:

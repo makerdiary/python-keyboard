@@ -35,7 +35,7 @@ All of the default Tap-keys, including <kbd>D</kbd>, <kbd>B</kbd>, and <kbd>;</k
 
 ### Using <kbd>B</kbd> to Configure Bluetooth and USB
 
-<kbd>B</kbd> is the default Tap-key to configure Bluetooth and USB. Tapping <kbd>B</kbd> (i.e., pressing & releasing it quickly) outputs `b`. Holding <kbd>B</kbd> down activates another the Bluetooth keyboard layer, layer number 3. When the Bluetooth layer is active, the following functions are available:
+<kbd>B</kbd> is the default Tap-key to configure Bluetooth and USB. Tapping <kbd>B</kbd> (_i.e._, pressing & releasing it quickly) outputs `b`. Holding <kbd>B</kbd> down activates another the Bluetooth keyboard layer, layer number 3. When the Bluetooth layer is active, the following functions are available:
 
 - <kbd>B</kbd> + <kbd>Esc</kbd> toggles Bluetooth
 - <kbd>B</kbd> + <kbd>0</kbd> ~ <kbd>9</kbd> changes Bluetooth ID to switch between multiple computers and phones
@@ -54,7 +54,7 @@ All of the default Tap-keys, including <kbd>D</kbd>, <kbd>B</kbd>, and <kbd>;</k
 
 ## Using Pair-keys
 
-Simultaneously pressing two keys (i.e., pressing them in an interval of less than 10ms) activates an alternate function.
+Simultaneously pressing two keys (_i.e._, pressing them in an interval of less than 10ms) activates an alternate function.
 
 Two sets of pair-keys are configured by default, to illustrate how to setup these keys. These include <kbd>J</kbd> <kbd>K</kbd> and <kbd>U</kbd> <kbd>I</kbd>. As shipped, simultaneously pressing <kbd>J</kbd> and <kbd>K</kbd> or <kbd>U</kbd> and <kbd>I</kbd> in a text editor will output a pre-defined string (_e.g._, "You just triggered pair keys #0").
 

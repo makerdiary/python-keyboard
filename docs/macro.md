@@ -29,7 +29,7 @@ keyboard.run()
 
 ## Examples
 
-### Use a macro to launch the Calculator on Windows
+### Use a macro to launch the Calculator application on Windows
 
 Replace the function `macro_handler` with the following code to launch the Calculator with a single keystroke:
 
@@ -53,7 +53,7 @@ def macro_handler(dev, n, is_down):
                 dev.send_text(line)
 ```
 
-### Repeated typing
+### Repeated key strokes
 
 Use a macro to trigger a repeated sequence of key presses until a new key is pressed.
 

@@ -10,7 +10,7 @@ To check the current version of the firmware, just open `boot_out.txt` in the US
 Adafruit CircuitPython 6.0.0-alpha.1-110-g121d78ec9 on 2020-08-27; Makerdiary M60 Keyboard with nRF52840
 ```
 
-If you there is a newer firmware (file with `.uf2` extension) in [python-keyboard / firmware](https://github.com/makerdiary/python-keyboard/tree/zh-cn/firmware), you can do an upgrade.
+If you there is a newer firmware revision (file with `.uf2` extension) in [python-keyboard / firmware](https://github.com/makerdiary/python-keyboard/tree/zh-cn/firmware), you upgrade to the newest version by following the instructions below.
 
 ## How to Enter the Bootloader
 
@@ -28,7 +28,7 @@ There are 4 ways to run into the bootloader:
     mcu.reset()
     ```
 
-4.  When battery is not attached, hold the ON/OFF button and power on the keyboard with USB.
+4.  When a battery is not attached, hold the ON/OFF button and power on the keyboard with USB.
 
 ## How to Upgrade
 

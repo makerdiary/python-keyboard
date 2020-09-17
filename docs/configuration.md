@@ -97,13 +97,13 @@ keyboard.run()
 
 The `keymap` variable can contains multiple layers of keycodes. The `macro_handler` is used to handle all macros. The `pairs_handler` is used to handle any pair-keys.
 
-**When `code.py` is saved, the keyboard will reload it. If `code.py` has a syntax error, the keyboard will stop working. But, don't worry, it wouldn't damage the hardware. Use another keyboard to fix the error and save it, then the keyboard will recover.**
+**When `code.py` is saved, the keyboard will reload it. If `code.py` has a syntax error, the keyboard will stop working. But, don't worry, it will not damage the hardware. Just use another keyboard to fix the error and save the file, and then the keyboard will recover.**
 
 ## Examples
 
 If you already Python, configuring the keyboard is simple. If not, here are some examples to get started.
 
-1.  To swap the positions of <kbd>Caps</kbd> and <kbd>LCtrl</kbd>, just swap `CAPS` and `LCTRL` in `layer 0` of `keymap`:
+1.  Swap the positions of <kbd>Caps</kbd> and <kbd>LCtrl</kbd>. To do this, just swap `CAPS` and `LCTRL` in `layer 0` of `keymap`:
 
     ```python
         # layer 0
@@ -116,7 +116,7 @@ If you already Python, configuring the keyboard is simple. If not, here are some
         ),
     ```
 
-2.  Instead of <kbd>D</kbd>, use <kbd>Caps</kbd> as a Tap-key to activate navigation functions. Only need to change `layer 0` to:
+2.  IUse <kbd>Caps</kbd> as a Tap-key to activate navigation functions, instead of <kbd>D</kbd>. To implement this, you only need to change `layer 0` to:
 
     ```python
         # layer 0
@@ -129,7 +129,7 @@ If you already Python, configuring the keyboard is simple. If not, here are some
         ),
     ```
 
-3.  Add a new macro. Use <kbd>Fn</kbd> and <kbd>Enter</kbd> to trigger No.1 macro. Just add `MACRO(1)` to `layer 1`:
+3.  Add a new macro. For example, the below uses <kbd>Fn</kbd> and <kbd>Enter</kbd> to trigger macro number 1 (the second macro, after macro number 0). Just add `MACRO(1)` to `layer 1`:
 
     ```python
         # layer 1
@@ -144,7 +144,7 @@ If you already Python, configuring the keyboard is simple. If not, here are some
 
     To define the function of the macro, please follow [the macro guide](macro.md)
 
-4.  Use <kbd>RShift</kbd>, <kbd>RGUI</kbd>, <kbd>Fn</kbd> and <kbd>RCtrl</kbd> as Tap-keys. Tapping them outputs arrows keys (press & release quickly). Just change `layer 0` to:
+4.  Use <kbd>RShift</kbd>, <kbd>RGUI</kbd>, <kbd>Fn</kbd> and <kbd>RCtrl</kbd> as Tap-keys, so that tapping them outputs arrows keys (press & release quickly). To do this, just change `layer 0` to:
 
     ```python
         # layer 0

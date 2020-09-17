@@ -1,11 +1,11 @@
 # Keyboard Configuration
 
 M60 is not just a USB HID device, but also a USB storage device. Python code can be saved and executed in the keyboard. When the keyboard powers on, it will run the Python file `code.py` in its USB storage.
-In `code.py`, we can modify its keymap, add a macro and add a new feature to keyboard.
+Using `code.py`, you can modify they keyboard's keymap, and add macros, Tap-keys and more.
 
 ![](https://gitee.com/makerdiary/python-keyboard/raw/resource/img/CIRCUITPY-en.png)
 
-The default content of `code.py` is:
+An up-to-date `code.py` is included in this repository. Example content for `code.py` could be:
 
 ```python
 
@@ -95,11 +95,13 @@ keyboard.run()
 
 ```
 
-`keymap` contains multiple layers of keycodes. `macro_handler` is used to handle all macros. `pairs_handler` is used to handle any pair-keys.
+The `keymap` variable can contains multiple layers of keycodes. The `macro_handler` is used to handle all macros. The `pairs_handler` is used to handle any pair-keys.
 
-**When `code.py` is saved, the keyboard will reload it. If `code.py` has a syntax error, the keyboard will stop working. But, don't worry, it wouldn't damage the hardware. Fix the error and save it, then the keyboard will recover**
+**When `code.py` is saved, the keyboard will reload it. If `code.py` has a syntax error, the keyboard will stop working. But, don't worry, it wouldn't damage the hardware. Use another keyboard to fix the error and save it, then the keyboard will recover.**
 
-If you know how Python works, configuring the keyboard would be very easy. If not, we have some examples to get started.
+## Examples
+
+If you already Python, configuring the keyboard is simple. If not, here are some examples to get started.
 
 1.  To swap the positions of <kbd>Caps</kbd> and <kbd>LCtrl</kbd>, just swap `CAPS` and `LCTRL` in `layer 0` of `keymap`:
 
@@ -127,7 +129,7 @@ If you know how Python works, configuring the keyboard would be very easy. If no
         ),
     ```
 
-2.  Add a new macro. Use <kbd>Fn</kbd> and <kbd>Enter</kbd> to trigger No.1 macro. Just add `MACRO(1)` to `layer 1`:
+3.  Add a new macro. Use <kbd>Fn</kbd> and <kbd>Enter</kbd> to trigger No.1 macro. Just add `MACRO(1)` to `layer 1`:
 
     ```python
         # layer 1

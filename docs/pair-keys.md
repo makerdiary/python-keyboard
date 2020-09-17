@@ -2,9 +2,9 @@
 
 They keyboard can be configured to activate a pre-defined function when two keys are pressed simultaneously (_i.e._, within an interval less than 10ms).
 
-Like a macro, activating pair-keys triggers an immediate event. Unlike a macro, pair-keys do not have a released (key-up) event.
+Like a macro, activating pair-keys triggers an immediate event. Unlike a macro, pair-keys do not have a release (key-up) event.
 
-By default, the keyboard uses <kbd>J</kbd> <kbd>K</kbd> and <kbd>U</kbd> <kbd>I</kbd> as pair-keys to trigger an example function (_e.g._, typing "You just triggered pair keys #0").
+By default, the keyboard uses <kbd>J</kbd> <kbd>K</kbd> and <kbd>U</kbd> <kbd>I</kbd> as pair-keys to trigger example functions (_e.g._, typing "You just triggered pair keys #0").
 
 ```python
 # code.py

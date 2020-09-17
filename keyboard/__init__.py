@@ -82,7 +82,6 @@ def reset_into_bootloader():
     microcontroller.reset()
 
 
-
 class Device:
     def __init__(self, kbd):
         self.kbd = kbd
@@ -248,21 +247,38 @@ class Keyboard:
         except Exception as e:
             print(e)
 
-    def is_tap_key(self, matrix, key):
+    def is_tapping_key(self, key):
         """Check if the key is tapped (press & release quickly)"""
+        matrix = self.matrix
         n = len(matrix)
         if n == 0:
-            n = matrix.wait(self.tap_delay - matrix.ms(matrix.time() - matrix.get_keydown_time(key)))
+            n = matrix.wait(
+                self.tap_delay - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+            )
         target = key | 0x80
-        if n == 1:
-            if target == matrix.view(0):
+        if n >= 1:
+            new_key = matrix.view(0)
+            if new_key == target:
                 return True
-            else:
+            if new_key >= 0x80:
+                # Fast Typing - B is a tap-key
+                #   A↓      B↓      A↑      B↑
+                # --+-------+-------+-------+------> t
+                #           |  dt1  |
+                #         dt1 < tap_delay
+                return True
+
+            if n == 1:
                 n = matrix.wait(
-                    self.fast_type_thresh - matrix.ms(matrix.time() - matrix.get_keydown_time(key))
+                    self.fast_type_thresh
+                    - matrix.ms(matrix.time() - matrix.get_keydown_time(new_key))
                 )
-        if n == 2 and target == matrix.view(1):
-            # Fast typing: A down, B down, A up, B up
+        if n >= 2 and target == matrix.view(1):
+            # Fast Typing - B is a tap-key
+            #   B↓      C↓      B↑      C↑
+            # --+-------+-------+-------+------> t
+            #   |  dt1  |  dt2  |
+            # dt1 < tap_delay && dt2 < fast_type_thresh
             return True
 
         return False
@@ -399,7 +415,8 @@ class Keyboard:
                 key = matrix.view(0)
                 if key < 0x80 and key in self.pair_keys:
                     n = matrix.wait(
-                        self.pair_delay - ms(matrix.time() - matrix.get_keydown_time(key))
+                        self.pair_delay
+                        - ms(matrix.time() - matrix.get_keydown_time(key))
                     )
 
             if n >= 2:
@@ -441,7 +458,7 @@ class Keyboard:
                             self.press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
-                            if self.is_tap_key(matrix, key):
+                            if self.is_tapping_key(key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
@@ -465,7 +482,7 @@ class Keyboard:
                                 keycodes = mods_to_keycodes(mods)
                                 self.press(*keycodes)
                                 self.layer_mask |= mask
-                            elif self.is_tap_key(matrix, key):
+                            elif self.is_tapping_key(key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
                                 if keycode == OP_TAP_TOGGLE:

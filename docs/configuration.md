@@ -144,7 +144,7 @@ If you already Python, configuring the keyboard is simple. If not, here are some
 
     To define the function of the macro, please follow [the macro guide](macro.md)
 
-4.  Use <kbd>RShift</kbd>, <kbd>RGUI</kbd>, <kbd>Fn</kbd> and <kbd>RCtrl</kbd> as Tap-keys, so that tapping them outputs arrows keys (press & release quickly). To do this, just change `layer 0` to:
+4.  Use <kbd>RShift</kbd>, <kbd>RGUI</kbd>, <kbd>Fn</kbd> and <kbd>RCtrl</kbd> as Tap-keys, so that tapping them (_i.e._, quickly pressing & releasing them) outputs arrows keys. To do this, just change `layer 0` to:
 
     ```python
         # layer 0

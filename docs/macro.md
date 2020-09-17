@@ -43,7 +43,7 @@ def macro_handler(dev, n, is_down):
 
 ### Automatic typing
 
-Read a file in the keyboard's USB storage and type its content automatically.
+Use the following code to read a file in the keyboard's USB storage and type its content automatically:
 
 ```python
 def macro_handler(dev, n, is_down):
@@ -55,7 +55,7 @@ def macro_handler(dev, n, is_down):
 
 ### Repeated key strokes
 
-Use a macro to trigger a repeated sequence of key presses until a new key is pressed.
+Use a macro to trigger a repeated sequence of key presses until a new key is pressed:
 
 ```python
 def macro_handler(dev, n, is_down):

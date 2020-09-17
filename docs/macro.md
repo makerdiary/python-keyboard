@@ -1,6 +1,6 @@
 # Macro
 
-To setup a macro, add a macro to the keymap and define its function. For example, use <kbd>Fn</kbd> as No.0 macro:
+To set up a macro, add a macro to the keymap and define its function. By default, <kbd>Fn</kbd> is configured as macro number 0:
 
 ```python
 # code.py
@@ -27,9 +27,11 @@ keyboard.macro_handler = macro_handler
 keyboard.run()
 ```
 
-## Use a macro to launch the Calculator on Windows
+## Examples
 
-Replace the function `macro_handler` with the following code to launch the Calculator with a single keystroke.
+### Use a macro to launch the Calculator on Windows
+
+Replace the function `macro_handler` with the following code to launch the Calculator with a single keystroke:
 
 ```python
 def macro_handler(dev, n, is_down):
@@ -39,9 +41,9 @@ def macro_handler(dev, n, is_down):
         dev.send_text('calc\n')
 ```
 
-## Automatic typing
+### Automatic typing
 
-Read a file in the USB storage and type its content automatically.
+Read a file in the keyboard's USB storage and type its content automatically.
 
 ```python
 def macro_handler(dev, n, is_down):
@@ -51,9 +53,9 @@ def macro_handler(dev, n, is_down):
                 dev.send_text(line)
 ```
 
-## Repeated typing
+### Repeated typing
 
-Use a macro to trigger a repeated sequence of typing until a new key is pressed.
+Use a macro to trigger a repeated sequence of key presses until a new key is pressed.
 
 ```python
 def macro_handler(dev, n, is_down):

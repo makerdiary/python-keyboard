@@ -38,6 +38,6 @@ It can run Python code saved in its USB storage, which makes it super powerful. 
 | RF Antennas       | 2.4GHz Cabled PCB Antenna, NFC Cabled PCB Antenna                                |
 | Dimensions        | 285 mm x 94.6 mm (compatible with DZ60 cases)                                    |
 
-**Note: The PCB uses north-facing switch orientation, and the switches are mounted below the LEDs. If you intend to use Cherry MX or low-profile keycaps, be sure to purchase key switches that are beveled on both sides. See Issue #3.**
+**Note: The M60 PCB uses a north-facing switch orientation. If you plan to use Cherry MX or low-profile keycaps, be sure to purchase key switches that are beveled on both the north and south ends. See Issue #3.**
 
 [1]: https://gitee.com/makerdiary/python-keyboard/wikis/pages

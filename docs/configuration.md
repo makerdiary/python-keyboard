@@ -116,7 +116,7 @@ If you already Python, configuring the keyboard is simple. If not, here are some
         ),
     ```
 
-2.  IUse <kbd>Caps</kbd> as a Tap-key to activate navigation functions, instead of <kbd>D</kbd>. To implement this, you only need to change `layer 0` to:
+2.  Use <kbd>Caps</kbd> as a Tap-key to activate navigation functions, instead of <kbd>D</kbd>. To implement this, you only need to change `layer 0` to:
 
     ```python
         # layer 0

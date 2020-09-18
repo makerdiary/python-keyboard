@@ -4,7 +4,7 @@
 
 2. Attach the provided 2.4GHz and NFC cabled PCB antennas to the nRF52840 M.2 module as shown in the figure below:
 
-   ![Attaching Antennas](https://wiki.makerdiary.com/nrf52840-m2-devkit/assets/images/attaching-antennas-to-m2.webp)
+   ![Attaching Antennas](./assets/images/attaching-antennas-to-m2.jpg)
 
 3. Insert the module into the connector as shown in the figure below:
 

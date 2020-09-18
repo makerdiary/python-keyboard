@@ -9,7 +9,7 @@ For quick questions there's no need to open an issue, because you can reach us o
 
 ## Found a bug?
 
-If you find a bug in the source code, you can help us by submitting an issue to the [issue tracker](https://github.com/makerdiary/mx-keyboard/issues) in our GitHub repository. Even better, you can submit a Pull Request with a fix.
+If you find a bug in the source code, you can help us by submitting an issue to the [issue tracker](https://github.com/makerdiary/python-keyboard/issues) in our GitHub repository. Even better, you can submit a Pull Request with a fix.
 
 ## Requesting a tutorial
 

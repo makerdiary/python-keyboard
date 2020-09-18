@@ -22,7 +22,7 @@
 site_name: M60 Keyboard
 site_description: The documentation offers all you need to start using M60 Keyboard.
 site_author: makerdiary
-site_url: https://wiki.makerdiary.com/python-keyboard
+site_url: https://wiki.makerdiary.com
 
 # Repository
 repo_name: makerdiary/python-keyboard
@@ -116,7 +116,7 @@ markdown_extensions:
   - pymdownx.magiclink:
       repo_url_shorthand: true
       user: makerdiary
-      repo: mx-keyboard
+      repo: python-keyboard
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.snippets:
@@ -136,7 +136,13 @@ nav:
   - Keycodes: keycodes.md
   - Macro: macro.md
   - Pair-Keys: pair-keys.md
+  - Backlight: backlight.md
   - Upgrade: upgrade_firmware.md
+  - Factory Reset: factory_reset.md
+  - Developer Guide:
+    - Dive Into Keyboard: developer_guide/index.md
+    - Hardware: developer_guide/hardware.md
+  - Where to Buy: where_to_buy.md
   - Contributing: CONTRIBUTING.md
   - 中文: https://gitee.com/makerdiary/python-keyboard/wikis/pages
 

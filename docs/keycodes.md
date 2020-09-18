@@ -1,62 +1,57 @@
-
-
- Name         | Description
---------------|--------------------
-`NO`          | Do nothing
-`TRANSPARENT` | Use the key of next active layer
+| Name          | Description                      |
+| ------------- | -------------------------------- |
+| `NO`          | Do nothing                       |
+| `TRANSPARENT` | Use the key of next active layer |
 
 ## Bluetooth
 
- Name         | Description
---------------|-------------------
-`BT0` ~ `BT9` | Switch to Bluetooth ID n (0 - 9)
-`BT_TOGGLE`   | Toggle Bluetooth
+| Name          | Description                      |
+| ------------- | -------------------------------- |
+| `BT0` ~ `BT9` | Switch to Bluetooth ID n (0 - 9) |
+| `BT_TOGGLE`   | Toggle Bluetooth                 |
 
 ## USB
 
- Name         | Description
---------------|-------------------
-`USB_TOGGLE`  | Toggle USB
+| Name         | Description |
+| ------------ | ----------- |
+| `USB_TOGGLE` | Toggle USB  |
 
-!!! note
-    When connecting the keyboard to a computer via USB, USB will be enabled automatically.
-    When both USB and Bluetooth are enabled, USB will be used.
+**Note: When connecting the keyboard to a computer via USB, USB will be enabled automatically. When both USB and Bluetooth are enabled, USB will be used.**
 
 ## System
 
- Name         | Description
---------------|-----------------------------------------
-`BOOTLOADER`  | Enter the bootloader of the keyboard
-`HEATMAP`     | Generate heatmap (todo)
-`SUSPEND`     | Suspend. To wake up keyboard, just press any key
-`SHUTDOWN`    | Shutdown. Use ON/OFF button to power on the keyboard
+| Name         | Description                                          |
+| ------------ | ---------------------------------------------------- |
+| `BOOTLOADER` | Enter the bootloader of the keyboard                 |
+| `HEATMAP`    | Generate heatmap (todo)                              |
+| `SUSPEND`    | Suspend. To wake up keyboard, just press any key     |
+| `SHUTDOWN`   | Shutdown. Use ON/OFF button to power on the keyboard |
 
 ## Layer & Modifier
 
-+ `MODS_KEY(mods, key)` sends one or more modifier(s) + a normal key. `MODS()` is used to wrap modifiers.
+- `MODS_KEY(mods, key)` sends one or more modifier(s) + a normal key. `MODS()` is used to wrap modifiers.
 
   `MODS_KEY(MODS(LCTRL), C)`, `MODS_KEY(MODS(LCTRL, LSHIFT), C)`, `MODS_KEY(MODS(LCTRL, LSHIFT, LALT), C)`
 
-+ `LAYER_TOGGLE(n)` toggles layer `n`
+- `LAYER_TOGGLE(n)` toggles layer `n`
 
-+ `MACRO(n)` creates macro `n`
+- `MACRO(n)` creates macro `n`
 
 ### TAP-Key
 
-`TAP-Key` has 2 modes - tap (press and release quickly) and hold (long press)
+A `TAP-Key` has 2 modes - tap (press and release quickly) and hold (long press)
 
-+ `LAYER_TAP(n, key)` tap - outputs `key`, hold - turns on layer n momentary
+- `LAYER_TAP(n, key)` tap - outputs `key`, hold - turns on layer n momentary
 
-+ `LAYER_TAP_TOGGLE(n)` tap - toggles layer n, hold - turns on layer n momentary
+- `LAYER_TAP_TOGGLE(n)` tap - toggles layer n, hold - turns on layer n momentary
 
-+ `LAYER_MODS(n, mods)` tap - outputs specified modifier(s), hold - turns on layer n momentary
+- `LAYER_MODS(n, mods)` tap - outputs specified modifier(s), hold - turns on layer n momentary
 
   `LAYER_MODS(1, MODS(LCTRL))`, `LAYER_MODS(1, MODS(LCTRL, LSHIFT))`
 
-+ `MODS_TAP(mods, key)` tap - outputs `key`, hold - outputs specified modifier(s)
+- `MODS_TAP(mods, key)` tap - outputs `key`, hold - outputs specified modifier(s)
 
   `MODS_TAP(MODS(LCTRL), ';')`, `MODS_TAP(MODS(LCTRL, LALT), LEFT)`
-
 
 ## APP & Media
 
@@ -298,4 +293,3 @@ SHIFT
 ALT
 GUI
 ```
-

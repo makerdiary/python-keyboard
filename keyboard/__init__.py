@@ -66,6 +66,17 @@ KEYMAP = (
 )
 # fmt: on
 
+KEY_NAME =  (
+    'ESC',   '1',   '2',   '3',   '4',   '5',   '6',   '7',   '8',   '9',   '0', '-', '=', 'BACKSPACE',
+    'TAB',   'Q',   'W',   'E',   'R',   'T',   'Y',   'U',   'I',   'O',   'P', '[', ']', '|',
+    'CAPS',  'A',   'S',   'D',   'F',   'G',   'H',   'J',   'K',   'L',   ';', '"',  'ENTER',
+    'LSHIFT','Z',   'X',   'C',   'V',   'B',   'N',   'M',   ',',   '.',   '/',       'RSHIFT',
+    'LCTRL', 'LGUI', 'LALT',          'SPACE',            'RALT', 'MENU',  'FN', 'RCTRL'
+)
+
+def get_name(key):
+    key = COORDS[key]
+    return KEY_NAME[key]
 
 @micropython.asm_thumb
 def mem(r0):
@@ -266,6 +277,13 @@ class Keyboard:
                 # --+-------+-------+-------+------> t
                 #           |  dt1  |
                 #         dt1 < tap_delay
+                new_key &= 0x7F
+                new_key_name = get_name(new_key)
+                key_name = get_name(key)
+                print('Tap - {} \\ {} \\ {} /'.format(new_key_name, key_name, new_key_name))
+                dt0 = matrix.get_keydown_time(key) - matrix.get_keydown_time(new_key)
+                dt1 = matrix.get_keyup_time(new_key) - matrix.get_keydown_time(key)
+                print('    dt0 = {}, dt1 = {}'.format(dt0, dt1))
                 return True
 
             if n == 1:
@@ -273,13 +291,30 @@ class Keyboard:
                     self.fast_type_thresh
                     - matrix.ms(matrix.time() - matrix.get_keydown_time(new_key))
                 )
-        if n >= 2 and target == matrix.view(1):
-            # Fast Typing - B is a tap-key
-            #   B↓      C↓      B↑      C↑
-            # --+-------+-------+-------+------> t
-            #   |  dt1  |  dt2  |
-            # dt1 < tap_delay && dt2 < fast_type_thresh
-            return True
+        if n >= 2:
+            if target == matrix.view(1):
+                # Fast Typing - B is a tap-key
+                #   B↓      C↓      B↑      C↑
+                # --+-------+-------+-------+------> t
+                #   |  dt1  |  dt2  |
+                # dt1 < tap_delay && dt2 < fast_type_thresh
+                new_key = matrix.view(0) & 0x7F
+                new_key_name = get_name(new_key)
+                key_name = get_name(key)
+                self.log('Tap - {} \\ {} \\ {} /'.format(key_name, new_key_name, key_name))
+                dt1 = matrix.get_keydown_time(new_key) - matrix.get_keydown_time(key)
+                dt2 = matrix.get_keyup_time(key) - matrix.get_keydown_time(new_key)
+                self.log('    dt1 = {}, dt2 = {}'.format(dt1, dt2))
+                return True
+
+            new_key = matrix.view(0) & 0x7F
+            if new_key == (matrix.view(1) & 0x7F):
+                new_key_name = get_name(new_key)
+                key_name = get_name(key)
+                self.log('Hold - {} \\ {} \\ {} /'.format(key_name, new_key_name, new_key_name))
+                dt1 = matrix.get_keydown_time(new_key) - matrix.get_keydown_time(key)
+                dt2 = matrix.get_keyup_time(new_key) - matrix.get_keydown_time(new_key)
+                self.log('    dt1 = {}, dt2 = {}'.format(dt1, dt2))
 
         return False
 
@@ -447,7 +482,7 @@ class Keyboard:
                         self.press(action_code)
                         if self.verbose:
                             dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                            log("{} \\ {} latency {}".format(key, hex(action_code), dt))
+                            log("{} {} \\ {} latency {}".format(key, get_name(key), hex(action_code), dt))
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -571,4 +606,4 @@ class Keyboard:
 
                     if self.verbose:
                         dt = ms(matrix.time() - matrix.get_keyup_time(key))
-                        log("{} / {} latency {}".format(key, hex(action_code), dt))
+                        log("{} {} / {} latency {}".format(key, get_name(key), hex(action_code), dt))

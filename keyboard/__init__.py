@@ -64,19 +64,16 @@ KEYMAP = (
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 )
-# fmt: on
 
 KEY_NAME =  (
-    'ESC',   '1',   '2',   '3',   '4',   '5',   '6',   '7',   '8',   '9',   '0', '-', '=', 'BACKSPACE',
-    'TAB',   'Q',   'W',   'E',   'R',   'T',   'Y',   'U',   'I',   'O',   'P', '[', ']', '|',
-    'CAPS',  'A',   'S',   'D',   'F',   'G',   'H',   'J',   'K',   'L',   ';', '"',  'ENTER',
-    'LSHIFT','Z',   'X',   'C',   'V',   'B',   'N',   'M',   ',',   '.',   '/',       'RSHIFT',
-    'LCTRL', 'LGUI', 'LALT',          'SPACE',            'RALT', 'MENU',  'FN', 'RCTRL'
+    'ESC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'BACKSPACE',
+    '|', ']', '[', 'P', 'O', 'I', 'U', 'Y', 'T', 'R', 'E', 'W', 'Q', 'TAB', 'CAPS',
+    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '"', 'ENTER',
+    'RSHIFT', '/', '.', ',', 'M', 'N', 'B', 'V', 'C', 'X', 'Z', 'LSHIFT',
+    'LCTRL', 'LGUI', 'LALT', 'SPACE', 'RALT', 'MENU', 'FN', 'RCTRL'
 )
+# fmt: on
 
-def get_name(key):
-    key = COORDS[key]
-    return KEY_NAME[key]
 
 @micropython.asm_thumb
 def mem(r0):
@@ -258,6 +255,36 @@ class Keyboard:
         except Exception as e:
             print(e)
 
+    def get_key_sequence_info(self, start, end):
+        """Get the info from a sequence of key events"""
+        matrix = self.matrix
+        event = matrix.view(start - 1)
+        key = event & 0x7F
+        desc = KEY_NAME[key]
+        if event < 0x80:
+            desc += ' \\ '
+            t0 = matrix.get_keydown_time(key)
+        else:
+            desc += ' / '
+            t0 = matrix.get_keyup_time(key)
+        
+        t = []
+        for i in range(start, end):
+            event = matrix.view(i)
+            key = event & 0x7F
+            desc += KEY_NAME[key]
+            if event < 0x80:
+                desc += ' \\ '
+                t1 = matrix.get_keydown_time(key)
+            else:
+                desc += ' / '
+                t1 = matrix.get_keyup_time(key)
+            dt = matrix.ms(t1 - t0)
+            t0 = t1
+            t.append(dt)
+
+        return desc, t
+
     def is_tapping_key(self, key):
         """Check if the key is tapped (press & release quickly)"""
         matrix = self.matrix
@@ -277,13 +304,10 @@ class Keyboard:
                 # --+-------+-------+-------+------> t
                 #           |  dt1  |
                 #         dt1 < tap_delay
-                new_key &= 0x7F
-                new_key_name = get_name(new_key)
-                key_name = get_name(key)
-                print('Tap - {} \\ {} \\ {} /'.format(new_key_name, key_name, new_key_name))
-                dt0 = matrix.get_keydown_time(key) - matrix.get_keydown_time(new_key)
-                dt1 = matrix.get_keyup_time(new_key) - matrix.get_keydown_time(key)
-                print('    dt0 = {}, dt1 = {}'.format(dt0, dt1))
+                if self.verbose:
+                    desc, t = self.get_key_sequence_info(-1, n)
+                    print(desc)
+                    print(t)
                 return True
 
             if n == 1:
@@ -291,30 +315,25 @@ class Keyboard:
                     self.fast_type_thresh
                     - matrix.ms(matrix.time() - matrix.get_keydown_time(new_key))
                 )
-        if n >= 2:
-            if target == matrix.view(1):
-                # Fast Typing - B is a tap-key
-                #   B↓      C↓      B↑      C↑
-                # --+-------+-------+-------+------> t
-                #   |  dt1  |  dt2  |
-                # dt1 < tap_delay && dt2 < fast_type_thresh
-                new_key = matrix.view(0) & 0x7F
-                new_key_name = get_name(new_key)
-                key_name = get_name(key)
-                self.log('Tap - {} \\ {} \\ {} /'.format(key_name, new_key_name, key_name))
-                dt1 = matrix.get_keydown_time(new_key) - matrix.get_keydown_time(key)
-                dt2 = matrix.get_keyup_time(key) - matrix.get_keydown_time(new_key)
-                self.log('    dt1 = {}, dt2 = {}'.format(dt1, dt2))
-                return True
+        if n < 2:
+            return False
 
-            new_key = matrix.view(0) & 0x7F
-            if new_key == (matrix.view(1) & 0x7F):
-                new_key_name = get_name(new_key)
-                key_name = get_name(key)
-                self.log('Hold - {} \\ {} \\ {} /'.format(key_name, new_key_name, new_key_name))
-                dt1 = matrix.get_keydown_time(new_key) - matrix.get_keydown_time(key)
-                dt2 = matrix.get_keyup_time(new_key) - matrix.get_keydown_time(new_key)
-                self.log('    dt1 = {}, dt2 = {}'.format(dt1, dt2))
+        if target == matrix.view(1):
+            # Fast Typing - B is a tap-key
+            #   B↓      C↓      B↑      C↑
+            # --+-------+-------+-------+------> t
+            #   |  dt1  |  dt2  |
+            # dt1 < tap_delay && dt2 < fast_type_thresh
+            if self.verbose:
+                desc, t = self.get_key_sequence_info(-1, n)
+                print(desc)
+                print(t)
+            return True
+
+        if self.verbose:
+            desc, t = self.get_key_sequence_info(-1, n)
+            print(desc)
+            print(t)
 
         return False
 
@@ -439,6 +458,7 @@ class Keyboard:
         dev = Device(self)
         keys = [0] * matrix.keys
         ms = matrix.ms
+        last_time = 0
         while True:
             n = matrix.wait()
             self.check()
@@ -481,8 +501,11 @@ class Keyboard:
                     if action_code < 0xFF:
                         self.press(action_code)
                         if self.verbose:
-                            dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                            log("{} {} \\ {} latency {}".format(key, get_name(key), hex(action_code), dt))
+                            keydown_time = matrix.get_keydown_time(key)
+                            dt = ms(matrix.time() - keydown_time)
+                            dt2 = ms(keydown_time - last_time)
+                            last_time = keydown_time
+                            print("{} {} \\ {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -562,8 +585,12 @@ class Keyboard:
                                 log("switch to bt {}".format(i))
                                 self.change_bt(i)
 
-                        dt = ms(matrix.time() - matrix.get_keydown_time(key))
-                        log("{} \\ {} latency {}".format(key, hex(keys[key]), dt))
+                        if self.verbose:
+                            keydown_time = matrix.get_keydown_time(key)
+                            dt = ms(matrix.time() - keydown_time)
+                            dt2 = ms(keydown_time - last_time)
+                            last_time = keydown_time
+                            print("{} {} \\ {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))
                 else:
                     action_code = keys[key]
                     if action_code < 0xFF:
@@ -605,5 +632,8 @@ class Keyboard:
                                     print(e)
 
                     if self.verbose:
-                        dt = ms(matrix.time() - matrix.get_keyup_time(key))
-                        log("{} {} / {} latency {}".format(key, get_name(key), hex(action_code), dt))
+                        keyup_time = matrix.get_keyup_time(key)
+                        dt = ms(matrix.time() - keyup_time)
+                        dt2 = ms(keyup_time - last_time)
+                        last_time = keyup_time
+                        print("{} {} / {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))

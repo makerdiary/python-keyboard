@@ -17,54 +17,7 @@ from .model import Matrix, COORDS, Backlight, battery_level
 from .action_code import *
 
 
-___ = TRANSPARENT
-BOOT = BOOTLOADER
-L1 = LAYER_TAP(1)
-L2D = LAYER_TAP(2, D)
-L3B = LAYER_TAP(3, B)
-
-# Semicolon & Ctrl
-SCC = MODS_TAP(MODS(RCTRL), ";")
-
 # fmt: off
-KEYMAP = (
-    # layer 0
-    (
-        ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
-        TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
-        CAPS,  A,   S,   D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
-        LSHIFT,Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',        RSHIFT,
-        LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
-    ),
-
-    # layer 1
-    (
-        '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
-        ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
-        ___,LEFT,DOWN,RIGHT,___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___,BOOT, ___, ___, ___, ___, ___,           ___,
-        ___, ___, ___,                ___,               ___, ___, ___,  ___
-    ),
-
-    # layer 2
-    (
-        '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
-        ___, ___, ___, ___, ___, ___, ___,PGUP, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___,LEFT,DOWN, UP,RIGHT, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___,PGDN, ___, ___, ___, ___,           ___,
-        ___, ___, ___,                ___,               ___, ___, ___,  ___
-    ),
-
-    # layer 3
-    (
-        BT_TOGGLE,BT1,BT2, BT3,BT4,BT5,BT6,BT7, BT8, BT9, BT0, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
-        ___, ___, ___,                ___,               ___, ___, ___,  ___
-    ),
-)
-
 KEY_NAME =  (
     'ESC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'BACKSPACE',
     '|', ']', '[', 'P', 'O', 'I', 'U', 'Y', 'T', 'R', 'E', 'W', 'Q', 'TAB', 'CAPS',
@@ -131,14 +84,14 @@ class Device:
 
 
 class Keyboard:
-    def __init__(self, keymap=KEYMAP, pairs=(), verbose=True):
-        self.keymap = KEYMAP
+    def __init__(self, keymap=(), pairs=(), verbose=True):
+        self.keymap = keymap
         self.profiles = {}
         self.pairs = pairs
         self.verbose = verbose
-        self.pairs_handler = None
+        self.pairs_handler = lambda dev, n: None
         self.pair_keys = set()
-        self.macro_handler = None
+        self.macro_handler = lambda dev, key, pressed: None
         self.layer_mask = 1
         self.matrix = Matrix()
         self.backlight = Backlight()
@@ -149,7 +102,7 @@ class Keyboard:
         self.fast_type_thresh = 200
         self.pair_delay = 10
 
-        self._current_conn = ""
+        self._connection = ""
 
         self.data = array.array("L", microcontroller.nvm[:272])
         if self.data[0] != 0x424B5950:
@@ -171,18 +124,18 @@ class Keyboard:
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
 
-    def update_current_conn(self):
+    def update_connection(self):
         if usb_is_connected() and self.usb_status == 3:
             conn = "USB"
         else:
             conn = "BT%d" % self.ble_id
-        if conn != self._current_conn:
-            self._current_conn = conn
+        if conn != self._connection:
+            self._connection = conn
             if conn in self.action_maps:
-                self.current_keymap = self.action_maps[self._current_conn]
+                self.current_keymap = self.action_maps[self._connection]
             else:
                 self.current_keymap = self.actonmap
-            print("Current connection changed to %s" % self._current_conn)
+            print("Connection changed to %s" % self._connection)
 
             # reset `layer_mask` when keymap is changed
             self.layer_mask = 1
@@ -220,7 +173,7 @@ class Keyboard:
             self.leds = leds
             self.backlight.set_hid_leds(leds)
             self.log("keyboard leds {}".format(bin(leds)))
-        self.update_current_conn()
+        self.update_connection()
 
         # update battery level
         if time.time() > self.battery_update_time:
@@ -240,7 +193,7 @@ class Keyboard:
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
-        self.update_current_conn()
+        self.update_connection()
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
@@ -262,22 +215,22 @@ class Keyboard:
         key = event & 0x7F
         desc = KEY_NAME[key]
         if event < 0x80:
-            desc += ' \\ '
+            desc += " \\ "
             t0 = matrix.get_keydown_time(key)
         else:
-            desc += ' / '
+            desc += " / "
             t0 = matrix.get_keyup_time(key)
-        
+
         t = []
         for i in range(start, end):
             event = matrix.view(i)
             key = event & 0x7F
             desc += KEY_NAME[key]
             if event < 0x80:
-                desc += ' \\ '
+                desc += " \\ "
                 t1 = matrix.get_keydown_time(key)
             else:
-                desc += ' / '
+                desc += " / "
                 t1 = matrix.get_keyup_time(key)
             dt = matrix.ms(t1 - t0)
             t0 = t1
@@ -372,7 +325,7 @@ class Keyboard:
             self.stop_advertising()
         else:
             self.start_advertising()
-        self.update_current_conn()
+        self.update_connection()
 
     def toggle_usb(self):
         if usb_is_connected():
@@ -380,7 +333,7 @@ class Keyboard:
                 self.usb_status = 3
             else:
                 self.usb_status = 1
-        self.update_current_conn()
+        self.update_connection()
 
     def action_code(self, position):
         position = COORDS[position]
@@ -485,12 +438,10 @@ class Keyboard:
                         matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
                     )
                     log("pair keys {} {}, dt = {}".format(pair_index, pair, dt))
-                    if callable(self.pairs_handler):
-                        try:
-                            self.pairs_handler(dev, pair_index)
-                        except Exception as e:
-                            print(e)
-                            pass
+                    try:
+                        self.pairs_handler(dev, pair_index)
+                    except Exception as e:
+                        print(e)
 
             while len(matrix):
                 event = self.get()
@@ -500,12 +451,6 @@ class Keyboard:
                     keys[key] = action_code
                     if action_code < 0xFF:
                         self.press(action_code)
-                        if self.verbose:
-                            keydown_time = matrix.get_keydown_time(key)
-                            dt = ms(matrix.time() - keydown_time)
-                            dt2 = ms(keydown_time - last_time)
-                            last_time = keydown_time
-                            print("{} {} \\ {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -585,12 +530,16 @@ class Keyboard:
                                 log("switch to bt {}".format(i))
                                 self.change_bt(i)
 
-                        if self.verbose:
-                            keydown_time = matrix.get_keydown_time(key)
-                            dt = ms(matrix.time() - keydown_time)
-                            dt2 = ms(keydown_time - last_time)
-                            last_time = keydown_time
-                            print("{} {} \\ {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))
+                    if self.verbose:
+                        keydown_time = matrix.get_keydown_time(key)
+                        dt = ms(matrix.time() - keydown_time)
+                        dt2 = ms(keydown_time - last_time)
+                        last_time = keydown_time
+                        print(
+                            "{} {} \\ {} latency {} | {}".format(
+                                key, KEY_NAME[key], hex(action_code), dt, dt2
+                            )
+                        )
                 else:
                     action_code = keys[key]
                     if action_code < 0xFF:
@@ -624,16 +573,19 @@ class Keyboard:
                             self.layer_mask &= ~(1 << layer)
                             log("layers {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
-                            if callable(self.macro_handler):
-                                i = action_code & 0xFFF
-                                try:
-                                    self.macro_handler(dev, i, False)
-                                except Exception as e:
-                                    print(e)
+                            i = action_code & 0xFFF
+                            try:
+                                self.macro_handler(dev, i, False)
+                            except Exception as e:
+                                print(e)
 
                     if self.verbose:
                         keyup_time = matrix.get_keyup_time(key)
                         dt = ms(matrix.time() - keyup_time)
                         dt2 = ms(keyup_time - last_time)
                         last_time = keyup_time
-                        print("{} {} / {} latency {} | {}".format(key, KEY_NAME[key], hex(action_code), dt, dt2))
+                        print(
+                            "{} {} / {} latency {} | {}".format(
+                                key, KEY_NAME[key], hex(action_code), dt, dt2
+                            )
+                        )

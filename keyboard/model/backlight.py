@@ -22,3 +22,13 @@ class Backlight:
 
     def update(self):
         pass
+
+    def check(self):
+        return False
+
+    def next(self):
+        pass
+
+    def handle_key(self, key, pressed):
+        pass
+

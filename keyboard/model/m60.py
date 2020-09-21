@@ -57,6 +57,37 @@ def battery_level():
     return BATTERY_VOLTAGE[i]
 
 
+leds_x = bytearray((
+    0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 216,
+    220,200, 184, 168, 152, 136, 120, 104, 88, 72, 56, 40, 24, 4,
+    6, 27, 43, 59, 75, 91, 107, 123, 139, 155, 171, 187, 214,
+    210, 180, 164, 148, 132, 116, 100, 84, 68, 52, 36, 10,
+    2, 22, 42, 102, 162, 182, 202, 222, 123, 82
+))
+
+leds_y = bytearray((
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+    32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+    48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
+    64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+))
+
+ 
+def to_rgb(h, s, v):
+    i = (h * 3) >> 8
+    o = (h * 3) & 0xFF
+
+    f = v * (255 - s) // 255
+    a = f + ((v - f) * o) >> 8
+    b = f + ((v - f) * (256 - o)) >> 8
+
+    if i == 0: return (b, a, f)
+    if i == 1: return (f, b, a)
+
+    return (a, f, b)
+
+
 class Backlight:
     def __init__(self):
         self.dev = IS31FL3733()
@@ -64,8 +95,17 @@ class Backlight:
         self._bt_led = None
         self.pixel = self.dev.pixel
 
+        self.hsv = [0, 255, 255]
+        self.keys = {}
+        self.n = 0
+
+        self.modes = (self.off, self.mono, self.gradient, self.spectrum, self.spectrum_x, self.spectrum_y, self.elapse)
+        self.mode = 6
+        self.mode_function = self.modes[self.mode]
+        self.dynamic = True
+
     def on(self, r=0xFF, g=0xFF, b=0xFF):
-        for i in range(64):
+        for i in range(63):
             self.pixel(i, r, g, b)
         self.update()
 
@@ -73,6 +113,60 @@ class Backlight:
         for i in range(64):
             self.pixel(i, 0, 0, 0)
         self.update()
+
+    def mono(self):
+        self.on(*to_rgb(*self.hsv))
+
+    def gradient(self):
+        h0, s0, v0 = self.hsv
+        for i in range(63):
+            h = (leds_y[i] + h0) & 0xFF
+            self.pixel(i, *to_rgb(h, s0, v0))
+        self.update()
+
+    def spectrum(self, offset=0):
+        self.n = (self.n + 1) & 0xFF
+        r, g, b = to_rgb(self.n, 255, 255)
+        for i in range(63):
+            self.pixel(i, r, g, b)
+        self.update()
+        return True
+
+    def spectrum_x(self):
+        n = self.n
+        for i in range(63):
+            h = (leds_x[i] + n) & 0xFF
+            self.pixel(i, *to_rgb(h, 255, 255))
+        self.update()
+        self.n = (n + 1) & 0xFF
+        return True
+        
+    def spectrum_y(self):
+        n = self.n
+        for i in range(63):
+            h = (leds_y[i] + n) & 0xFF
+            self.pixel(i, *to_rgb(h, 255, 255))
+        self.update()
+        self.n = (n + 1) & 0xFF
+        return True
+        
+    def handle_key(self, key, pressed):
+        if self.mode == 6:
+            self.keys[key] = 255
+        
+    def elapse(self):
+        if 0 == len(self.keys):
+            return False
+        for i in self.keys.keys():
+            t = self.keys[i]
+            self.pixel(i, *to_rgb(255 - t, 255, t))
+            t -= 1
+            if t < 0:
+                self.keys.pop(i)
+            else:
+                self.keys[i] = t
+        self.update()
+        return True
 
     def set_brightness(self, v):
         self.dev.set_brightness(v)
@@ -84,8 +178,7 @@ class Backlight:
             self.dev.update_pixel(28, 0, 0x80, 0)
         else:
             self.dev.update_pixel(28, 0, 0, 0)
-            if self._bt_led is None and not self.dev.any():
-                self.dev.power.value = 0
+            self.mode_function()
 
     def set_bt_led(self, v):
         if self._bt_led is not None:
@@ -95,7 +188,7 @@ class Backlight:
         self._bt_led = v
         if v is not None:
             self.dev.breathing_pixel(v, 2)
-        elif (self._hid_leds & 2) == 0:
+        elif (self._hid_leds & 2) == 0 and not self.dev.any():
             self.dev.power.value = 0
 
     def update(self):
@@ -110,3 +203,23 @@ class Backlight:
         self.dev.update()
         if not in_use and not self.dev.any():
             self.dev.power.value = 0
+
+    def check(self):
+        if self.dynamic:
+            return self.mode_function()
+        return False
+
+    def next(self):
+        for i in range(63):
+            self.pixel(i, 0, 0, 0)
+        self.mode += 1
+        if self.mode >= len(self.modes):
+            self.mode = 0
+        self.mode_function = self.modes[self.mode]
+        if self.mode == 6:
+            self.keys.clear()
+        if self.mode >= 3:
+            self.dynamic = True 
+        else:
+            self.dynamic = False
+            self.mode_function()

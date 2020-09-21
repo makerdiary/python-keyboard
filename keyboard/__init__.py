@@ -399,10 +399,13 @@ class Keyboard:
             print(e)
 
     def get(self):
-        key = self.matrix.get()
-        if key & 0x80 == 0:
+        event = self.matrix.get()
+        key = event & 0x7F
+        pressed = event < 0x80
+        if pressed:
             self.heatmap[key] += 1
-        return key
+        self.backlight.handle_key(key, pressed)
+        return event
 
     def run(self):
         self.setup()
@@ -413,7 +416,8 @@ class Keyboard:
         ms = matrix.ms
         last_time = 0
         while True:
-            n = matrix.wait()
+            t = 20 if self.backlight.check() else 1000
+            n = matrix.wait(t)
             self.check()
             if n == 0:
                 continue
@@ -508,6 +512,9 @@ class Keyboard:
                                     self.macro_handler(dev, i, True)
                                 except Exception as e:
                                     print(e)
+                        elif kind == ACT_BACKLIGHT:
+                            if action_code == RGB_MOD:
+                                self.backlight.next()
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
                                 reset_into_bootloader()

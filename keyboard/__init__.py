@@ -515,6 +515,20 @@ class Keyboard:
                         elif kind == ACT_BACKLIGHT:
                             if action_code == RGB_MOD:
                                 self.backlight.next()
+                            elif action_code == RGB_TOGGLE:
+                                self.backlight.toggle()
+                            elif action_code == RGB_HUE:
+                                self.backlight.hue += 8
+                            elif action_code == HUE_RGB:
+                                self.backlight.hue -= 8
+                            elif action_code == RGB_SAT:
+                                self.backlight.sat += 8
+                            elif action_code == SAT_RGB:
+                                self.backlight.sat -= 8
+                            elif action_code == RGB_VAL:
+                                self.backlight.val += 8
+                            elif action_code == VAL_RGB:
+                                self.backlight.val -= 8
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
                                 reset_into_bootloader()

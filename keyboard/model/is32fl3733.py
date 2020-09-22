@@ -60,6 +60,8 @@ class IS31FL3733:
         self.set_brightness(255)
 
     def set_brightness(self, n):
+        n &= 0xFF
+        self._brightness = n
         if not self.power.value:
             self.power.value = 1
 
@@ -67,7 +69,21 @@ class IS31FL3733:
         self.page(3)
         self.write(1, n)
 
+    @property
+    def brightness(self):
+        return self._brightness
+
+    @brightness.setter
+    def brightness(self, n):
+        self.set_brightness(n)
+
+    def clear(self):
+        pixels = self.pixels
+        for i in range(192):
+            pixels[i] = 0
+
     def pixel(self, i, r, g, b):
+        """Set the pixel. It takes effect after calling update()"""
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
         self.pixels[row * 48 + col] = g
@@ -75,6 +91,7 @@ class IS31FL3733:
         self.pixels[row * 48 + 32 + col] = b
 
     def update_pixel(self, i, r, g, b):
+        """Set the pixel and update"""
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
         self.pixels[row * 48 + col] = g

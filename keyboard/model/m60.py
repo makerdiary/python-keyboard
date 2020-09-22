@@ -73,19 +73,46 @@ leds_y = bytearray((
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64
 ))
 
+
+def hsv_to_rgb(h, s, v):
+    i = (h * 6) >> 8
+    f = (h * 6) & 0xFF
+
+    p = (v * (256 - s)) >> 8
+    q = (v * (65536 - s * f)) >> 16
+    t = (v * (65536 - s * (256 - f))) >> 16
+
+    if i == 0: return (v, t, p)
+    if i == 1: return (q, v, p)
+    if i == 2: return (p, v, t)
+    if i == 3: return (p, q, v)
+    if i == 4: return (t, p, v)
+    return (v, p, q)
+
  
-def to_rgb(h, s, v):
+def wheel(h):
     i = (h * 3) >> 8
-    o = (h * 3) & 0xFF
+    a = (h * 3) & 0xFF
+    b = 255 - a
 
-    f = v * (255 - s) // 255
-    a = f + ((v - f) * o) >> 8
-    b = f + ((v - f) * (256 - o)) >> 8
+    if i == 0: return (b, a, 0)
+    if i == 1: return (0, b, a)
 
-    if i == 0: return (b, a, f)
-    if i == 1: return (f, b, a)
+    return (a, 0, b)
 
-    return (a, f, b)
+
+def wheel2(h, v):
+    i = (h * 3) >> 8
+    a = (h * 3) & 0xFF
+    b = 255 - a
+
+    a = a * v // 255
+    b = b * v // 255
+
+    if i == 0: return (b, a, 0)
+    if i == 1: return (0, b, a)
+
+    return (a, 0, b)
 
 
 class Backlight:
@@ -95,6 +122,7 @@ class Backlight:
         self._bt_led = None
         self.pixel = self.dev.pixel
 
+        self.enabled = True
         self.hsv = [0, 255, 255]
         self.keys = {}
         self.n = 0
@@ -104,29 +132,73 @@ class Backlight:
         self.mode_function = self.modes[self.mode]
         self.dynamic = True
 
+    @property
+    def hue(self):
+        return self.hsv[0]
+
+    @hue.setter
+    def hue(self, h):
+        self.hsv[0] = h & 0xFF
+        if not self.dynamic:
+            self.mode_function()
+
+    @property
+    def sat(self):
+        return self.hsv[1]
+
+    @sat.setter
+    def sat(self, s):
+        self.hsv[1] = 0 if s < 0 else (255 if s > 255 else s)
+        if not self.dynamic:
+            self.mode_function()
+
+    @property
+    def val(self):
+        return self.dev.brightness
+
+    @val.setter
+    def val(self, v):
+        self.set_brightness(v)
+
+    def set_brightness(self, v):
+        if v <= 0:
+            self.enabled = False
+            self.off()
+        else:
+            self.enabled = True
+            self.dev.brightness = v if v < 0xFF else 0xFF
+            if not self.dynamic:
+                self.mode_function()
+
     def on(self, r=0xFF, g=0xFF, b=0xFF):
         for i in range(63):
             self.pixel(i, r, g, b)
         self.update()
 
     def off(self):
-        for i in range(64):
-            self.pixel(i, 0, 0, 0)
+        self.dev.clear()
         self.update()
 
+    def toggle(self):
+        self.enabled = not self.enabled
+        if self.enabled:
+            self.set_mode(self.mode)
+        else:
+            self.off()
+
     def mono(self):
-        self.on(*to_rgb(*self.hsv))
+        self.on(*hsv_to_rgb(*self.hsv))
 
     def gradient(self):
         h0, s0, v0 = self.hsv
         for i in range(63):
             h = (leds_y[i] + h0) & 0xFF
-            self.pixel(i, *to_rgb(h, s0, v0))
+            self.pixel(i, *hsv_to_rgb(h, s0, v0))
         self.update()
 
     def spectrum(self, offset=0):
         self.n = (self.n + 1) & 0xFF
-        r, g, b = to_rgb(self.n, 255, 255)
+        r, g, b = wheel(self.n)
         for i in range(63):
             self.pixel(i, r, g, b)
         self.update()
@@ -136,7 +208,7 @@ class Backlight:
         n = self.n
         for i in range(63):
             h = (leds_x[i] + n) & 0xFF
-            self.pixel(i, *to_rgb(h, 255, 255))
+            self.pixel(i, *wheel(h))
         self.update()
         self.n = (n + 1) & 0xFF
         return True
@@ -145,13 +217,13 @@ class Backlight:
         n = self.n
         for i in range(63):
             h = (leds_y[i] + n) & 0xFF
-            self.pixel(i, *to_rgb(h, 255, 255))
+            self.pixel(i, *wheel(h))
         self.update()
         self.n = (n + 1) & 0xFF
         return True
         
     def handle_key(self, key, pressed):
-        if self.mode == 6:
+        if self.enabled and self.mode == 6:
             self.keys[key] = 255
         
     def elapse(self):
@@ -159,7 +231,7 @@ class Backlight:
             return False
         for i in self.keys.keys():
             t = self.keys[i]
-            self.pixel(i, *to_rgb(255 - t, 255, t))
+            self.pixel(i, *wheel2(255 - t, t))
             t -= 1
             if t < 0:
                 self.keys.pop(i)
@@ -167,9 +239,6 @@ class Backlight:
                 self.keys[i] = t
         self.update()
         return True
-
-    def set_brightness(self, v):
-        self.dev.set_brightness(v)
 
     def set_hid_leds(self, v):
         self._hid_leds = v
@@ -205,16 +274,26 @@ class Backlight:
             self.dev.power.value = 0
 
     def check(self):
-        if self.dynamic:
+        if self.enabled and self.dynamic:
             return self.mode_function()
         return False
 
     def next(self):
-        for i in range(63):
-            self.pixel(i, 0, 0, 0)
+        self.dev.clear()
         self.mode += 1
         if self.mode >= len(self.modes):
             self.mode = 0
+        self.mode_function = self.modes[self.mode]
+        if self.mode == 6:
+            self.keys.clear()
+        if self.mode >= 3:
+            self.dynamic = True 
+        else:
+            self.dynamic = False
+            self.mode_function()
+
+    def set_mode(self, mode):
+        self.mode =  mode if mode < len(self.modes) else 0
         self.mode_function = self.modes[self.mode]
         if self.mode == 6:
             self.keys.clear()

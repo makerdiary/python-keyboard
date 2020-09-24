@@ -1,5 +1,3 @@
-# fmt: off
-
 import analogio
 import microcontroller
 from .is32fl3733 import IS31FL3733
@@ -15,7 +13,7 @@ except ImportError:
     Matrix.COLS = (C1, C2, C3, C4, C5, C6, C7, C8)
     Matrix.ROW2COL = False
 
-
+# fmt: off
 # ESC   1   2   3   4   5   6   7   8   9   0   -   =  BACKSPACE
 # TAB   Q   W   E   R   T   Y   U   I   O   P   [   ]   |
 # CAPS  A   S   D   F   G   H   J   K   L   ;   "      ENTER
@@ -62,7 +60,8 @@ leds_x = bytearray((
     220,200, 184, 168, 152, 136, 120, 104, 88, 72, 56, 40, 24, 4,
     6, 27, 43, 59, 75, 91, 107, 123, 139, 155, 171, 187, 214,
     210, 180, 164, 148, 132, 116, 100, 84, 68, 52, 36, 10,
-    2, 22, 42, 102, 162, 182, 202, 222, 123, 82
+    2, 22, 42, 102, 162, 182, 202, 222,
+    123, 82
 ))
 
 leds_y = bytearray((
@@ -70,8 +69,27 @@ leds_y = bytearray((
     16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
     32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
     48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64
+    64, 64, 64, 64, 64, 64, 64, 64,
+    64, 64
 ))
+
+angle = bytearray((
+    180, 178, 176, 173, 168, 160, 146, 128, 109, 96, 87, 82, 79, 76,
+    69, 71, 72, 75, 79, 87, 109, 146, 168, 176, 180, 183, 184, 186,
+    170, 170, 170, 170, 170, 170, 170, 64, 64, 64, 64, 64, 64,
+    57, 54, 51, 46, 36, 9, 229, 213, 206, 202, 200, 198,
+    203, 205, 209, 243, 40, 46, 50, 52,
+    13, 225
+))
+
+distance = bytearray((
+    116, 101, 86, 71, 57, 45, 35, 32, 35, 45, 57, 71, 86, 108, 109, 89, 73,
+    58, 43, 28, 17, 17, 28, 43, 58, 73, 89, 109, 106, 85, 69, 53, 37, 21, 5,
+    11, 27, 43, 59, 75, 102, 99, 69, 54, 39, 25, 16, 20, 32, 46, 62, 77, 103,
+    114, 95, 76, 33, 59, 76, 95, 114,
+    33, 43
+))
+# fmt: on
 
 
 def hsv_to_rgb(h, s, v):
@@ -82,21 +100,28 @@ def hsv_to_rgb(h, s, v):
     q = (v * (65536 - s * f)) >> 16
     t = (v * (65536 - s * (256 - f))) >> 16
 
-    if i == 0: return (v, t, p)
-    if i == 1: return (q, v, p)
-    if i == 2: return (p, v, t)
-    if i == 3: return (p, q, v)
-    if i == 4: return (t, p, v)
+    if i == 0:
+        return (v, t, p)
+    if i == 1:
+        return (q, v, p)
+    if i == 2:
+        return (p, v, t)
+    if i == 3:
+        return (p, q, v)
+    if i == 4:
+        return (t, p, v)
     return (v, p, q)
 
- 
+
 def wheel(h):
     i = (h * 3) >> 8
     a = (h * 3) & 0xFF
     b = 255 - a
 
-    if i == 0: return (b, a, 0)
-    if i == 1: return (0, b, a)
+    if i == 0:
+        return (b, a, 0)
+    if i == 1:
+        return (0, b, a)
 
     return (a, 0, b)
 
@@ -109,8 +134,10 @@ def wheel2(h, v):
     a = a * v // 255
     b = b * v // 255
 
-    if i == 0: return (b, a, 0)
-    if i == 1: return (0, b, a)
+    if i == 0:
+        return (b, a, 0)
+    if i == 1:
+        return (0, b, a)
 
     return (a, 0, b)
 
@@ -127,7 +154,18 @@ class Backlight:
         self.keys = {}
         self.n = 0
 
-        self.modes = (self.off, self.mono, self.gradient, self.spectrum, self.spectrum_x, self.spectrum_y, self.elapse)
+        self.modes = (
+            self.off,
+            self.mono,
+            self.gradient,
+            self.spectrum,
+            self.spectrum_x,
+            self.spectrum_y,
+            self.elapse,
+            self.broadcast,
+            self.blackhole,
+            self.pinwheel,
+        )
         self.mode = 6
         self.mode_function = self.modes[self.mode]
         self.dynamic = True
@@ -212,7 +250,7 @@ class Backlight:
         self.update()
         self.n = (n + 1) & 0xFF
         return True
-        
+
     def spectrum_y(self):
         n = self.n
         for i in range(63):
@@ -221,11 +259,35 @@ class Backlight:
         self.update()
         self.n = (n + 1) & 0xFF
         return True
-        
+
+    def broadcast(self):
+        n = self.n
+        for i in range(63):
+            self.pixel(i, *wheel((distance[i] - n) & 0xFF))
+        self.update()
+        self.n = (n + 2) & 0xFF
+        return True
+
+    def blackhole(self):
+        n = self.n
+        for i in range(63):
+            self.pixel(i, *wheel2((distance[i] + n) & 0xFF, distance[i] * 2 - 10))
+        self.update()
+        self.n = (n + 2) & 0xFF
+        return True
+
+    def pinwheel(self):
+        n = self.n
+        for i in range(63):
+            self.pixel(i, *wheel((angle[i] + n) & 0xFF))
+        self.update()
+        self.n = (n + 2) & 0xFF
+        return True
+
     def handle_key(self, key, pressed):
         if self.enabled and self.mode == 6:
             self.keys[key] = 255
-        
+
     def elapse(self):
         if 0 == len(self.keys):
             return False
@@ -287,18 +349,18 @@ class Backlight:
         if self.mode == 6:
             self.keys.clear()
         if self.mode >= 3:
-            self.dynamic = True 
+            self.dynamic = True
         else:
             self.dynamic = False
             self.mode_function()
 
     def set_mode(self, mode):
-        self.mode =  mode if mode < len(self.modes) else 0
+        self.mode = mode if mode < len(self.modes) else 0
         self.mode_function = self.modes[self.mode]
         if self.mode == 6:
             self.keys.clear()
         if self.mode >= 3:
-            self.dynamic = True 
+            self.dynamic = True
         else:
             self.dynamic = False
             self.mode_function()

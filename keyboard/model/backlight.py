@@ -36,3 +36,6 @@ class Backlight:
 
     def toggle(self):
         pass
+
+    def set_mode(self, mode):
+        pass

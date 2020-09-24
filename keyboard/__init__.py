@@ -103,6 +103,7 @@ class Keyboard:
         self.pair_delay = 10
 
         self._connection = ""
+        self.adv_timeout = None
 
         self.data = array.array("L", microcontroller.nvm[:272])
         if self.data[0] != 0x424B5950:
@@ -193,7 +194,6 @@ class Keyboard:
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
-        self.update_connection()
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
@@ -292,6 +292,10 @@ class Keyboard:
 
     def change_bt(self, n):
         if self.ble.connected:
+            try:
+                self.ble_hid.release_all()
+            except Exception as e:
+                print(e)
             for c in self.ble.connections:
                 c.disconnect()
         if self.ble._adapter.advertising:
@@ -315,10 +319,15 @@ class Keyboard:
         except Exception as e:
             print(e)
         self.log(self.ble._adapter.address)
+
         self.start_advertising()
 
     def toggle_bt(self):
         if self.ble.connected:
+            try:
+                self.ble_hid.release_all()
+            except Exception as e:
+                print(e)
             for c in self.ble.connections:
                 c.disconnect()
         elif self.ble._adapter.advertising:
@@ -333,6 +342,10 @@ class Keyboard:
                 self.usb_status = 3
             else:
                 self.usb_status = 1
+                try:
+                    self.usb_hid.release_all()
+                except Exception as e:
+                    print(e)
         self.update_connection()
 
     def action_code(self, position):

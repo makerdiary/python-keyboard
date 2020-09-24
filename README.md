@@ -50,7 +50,7 @@ Simultaneously pressing two keys (interval less than 10ms) activates an alternat
 
 ### Optimizing with C modules<sup><kbd>in progress</kbd></sup>
 
-A C module `matrix` of keyboard matrix is written to reduce latency and power consuption. The module has the same function as [`keyboard/matrix.py`](keyboard/matrix.py).
+A C module `matrix` of keyboard matrix is written to reduce latency and power consumption. The module has the same function as [`keyboard/matrix.py`](keyboard/matrix.py).
 
 
 ## Todo

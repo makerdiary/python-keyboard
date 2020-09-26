@@ -165,6 +165,8 @@ class Backlight:
             self.broadcast,
             self.blackhole,
             self.pinwheel,
+            self.beacon,
+            self.beacon2
         )
         self.mode = 6
         self.mode_function = self.modes[self.mode]
@@ -280,6 +282,34 @@ class Backlight:
         n = self.n
         for i in range(63):
             self.pixel(i, *wheel((angle[i] + n) & 0xFF))
+        self.update()
+        self.n = (n + 2) & 0xFF
+        return True
+
+    def beacon(self):
+        n = self.n
+        for i in range(63):
+            offset = (angle[i] + n) & 0xFF
+            if offset < 64:
+                offset <<= 2
+            else:
+                offset = 0
+            self.pixel(i, *wheel(offset))
+        self.update()
+        self.n = (n + 2) & 0xFF
+        return True
+
+    def beacon2(self):
+        n = self.n
+        for i in range(63):
+            offset = (angle[i] + n) & 0xFF
+            if offset < 64:
+                offset <<= 2
+            elif 128 < offset and offset < 192:
+                offset = (offset - 128) << 2
+            else:
+                offset = 0
+            self.pixel(i, *wheel(offset))
         self.update()
         self.n = (n + 2) & 0xFF
         return True

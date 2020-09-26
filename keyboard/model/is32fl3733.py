@@ -9,7 +9,9 @@ class IS31FL3733:
         self.address = address
         self._page = None
         self._buffer = bytearray(12 * 16 + 1)
+        self._buffer[0] = 0
         self.pixels = memoryview(self._buffer)[1:]
+        self.mode_mask = 0
 
         self.power = digitalio.DigitalInOut(microcontroller.pin.P1_04)
         self.power.direction = digitalio.Direction.OUTPUT
@@ -24,6 +26,8 @@ class IS31FL3733:
         # print(self.open_pixels())
         # print(self.short_pixels())
 
+        self.power.value = 0
+
     def page(self, n):
         if self._page is n:
             return
@@ -37,6 +41,7 @@ class IS31FL3733:
         self.read(0x11)
 
     def setup(self):
+        # configure 3 breathing modes
         self.page(3)
         self.write(2, (2 << 5) | (0 << 1))
         self.write(3, (2 << 5) | (3 << 1))
@@ -54,10 +59,10 @@ class IS31FL3733:
         self.write(0, 3)
         self.write(0xE, 0)
 
+        self.set_brightness(128)
+
         self.page(0)
         self.write(0, [255] * 0x18)
-
-        self.set_brightness(255)
 
     def set_brightness(self, n):
         n &= 0xFF
@@ -105,13 +110,16 @@ class IS31FL3733:
         self.write(row * 48 + 32 + col, b)
 
     def update(self):
-        if not self.power.value:
-            self.power.value = 1
+        self.power.value = 1
         self.page(1)
         self.i2c.writeto(self.address, self._buffer)
+        if not self.any():
+            self.power.value = 0
 
     def any(self):
         """Check if any pixel is not zero"""
+        if self.mode_mask > 0:
+            return True
         for pixel in self.pixels:
             if pixel > 0:
                 return True
@@ -131,15 +139,20 @@ class IS31FL3733:
         self.i2c.writeto_then_readfrom(self.address, bytearray((register,)), buffer)
         return buffer[0]
 
-    def breathing_pixel(self, i, mode=2):
-        if not self.power.value:
-            self.power.value = 1
+    def set_mode(self, i, mode=2):
+        self.power.value = 1
         self.page(2)
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
         self.write(row * 48 + 32 + col, mode)  # blue
         # self.write(row * 48 + col, mode)         # green
         # self.write(row * 48 + 16 + col, mode)    # red
+        if mode:
+            self.mode_mask |= 1 << i
+        else:
+            self.mode_mask &= ~(1 << i)
+            if not self.any():
+                self.power.value = 0
 
     def open_pixels(self):
         # 18h ~ 2Fh LED Open Register

@@ -179,8 +179,7 @@ class Backlight:
     @hue.setter
     def hue(self, h):
         self.hsv[0] = h & 0xFF
-        if not self.dynamic:
-            self.mode_function()
+        self.refresh()
 
     @property
     def sat(self):
@@ -189,8 +188,7 @@ class Backlight:
     @sat.setter
     def sat(self, s):
         self.hsv[1] = 0 if s < 0 else (255 if s > 255 else s)
-        if not self.dynamic:
-            self.mode_function()
+        self.refresh()
 
     @property
     def val(self):
@@ -337,7 +335,7 @@ class Backlight:
             self._hid_leds = v
             g = 128 if (self._hid_leds & 2) else 0
             self.dev.update_pixel(28, 0, g, 0)
-            self.mode_function()
+            self.refresh()
 
     def set_bt_led(self, v):
         if v == 0:
@@ -358,10 +356,15 @@ class Backlight:
             return self.mode_function()
         return False
 
+    def refresh(self):
+        if self.enabled and not self.dynamic:
+            self.mode_function()
+
     def next(self):
         self.set_mode(self.mode + 1)
 
     def set_mode(self, mode):
+        self.enabled = True
         self.dev.clear()
         self.mode = mode if mode < len(self.modes) else 0
         self.mode_function = self.modes[self.mode]

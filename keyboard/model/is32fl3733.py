@@ -91,23 +91,26 @@ class IS31FL3733:
         """Set the pixel. It takes effect after calling update()"""
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
-        self.pixels[row * 48 + col] = g
-        self.pixels[row * 48 + 16 + col] = r
-        self.pixels[row * 48 + 32 + col] = b
+        offset = row * 48 + col
+        self.pixels[offset] = g
+        self.pixels[offset + 16] = r
+        self.pixels[offset + 32] = b
 
     def update_pixel(self, i, r, g, b):
         """Set the pixel and update"""
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
-        self.pixels[row * 48 + col] = g
-        self.pixels[row * 48 + 16 + col] = r
-        self.pixels[row * 48 + 32 + col] = b
-        if not self.power.value:
-            self.power.value = 1
+        offset = row * 48 + col
+        self.pixels[offset] = g
+        self.pixels[offset + 16] = r
+        self.pixels[offset + 32] = b
+        self.power.value = 1
         self.page(1)
-        self.write(row * 48 + col, g)
-        self.write(row * 48 + 16 + col, r)
-        self.write(row * 48 + 32 + col, b)
+        self.write(offset, g)
+        self.write(offset + 16, r)
+        self.write(offset + 32, b)
+        if not self.any():
+            self.power.value = 0
 
     def update(self):
         self.power.value = 1

@@ -121,9 +121,11 @@ class Keyboard:
         self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
         self.ble = adafruit_ble.BLERadio()
-        self.change_bt(self.ble_id)
+        self.set_bt_id(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
+        if not usb_is_connected():
+            self.change_bt(self.ble_id)
 
     def update_connection(self):
         if usb_is_connected() and self.usb_status == 3:
@@ -157,28 +159,24 @@ class Keyboard:
             elif time.time() > self.adv_timeout:
                 self.stop_advertising()
 
-        leds = None
         if usb_is_connected():
             if self.usb_status == 0:
                 self.usb_status = 3
-            elif self.usb_status == 3:
-                leds = self.usb_hid.leds
+                self.update_connection()
         elif self.usb_status > 0:
             self.usb_status = 0
-            if not self.ble._adapter.advertising:
+            self.update_connection()
+            if not self.ble.connected and not self.ble._adapter.advertising:
                 self.start_advertising()
 
-        if leds is None:
-            leds = self.ble_hid.leds if self.ble.connected else 0
-        if leds != self.leds:
-            self.leds = leds
-            self.backlight.set_hid_leds(leds)
-            self.log("keyboard leds {}".format(bin(leds)))
-        self.update_connection()
+        if self.usb_status == 3:
+            self.backlight.set_hid_leds(self.usb_hid.leds)
+        elif self.ble.connected:
+            self.backlight.set_hid_leds(self.ble_hid.leds)
 
         # update battery level
         if time.time() > self.battery_update_time:
-            self.battery_update_time = time.time() + 360
+            self.battery_update_time = time.time() + 3600
             self.battery.level = battery_level()
 
     def setup(self):
@@ -290,7 +288,10 @@ class Keyboard:
 
         return False
 
-    def change_bt(self, n):
+    def set_bt_id(self, n):
+        if 0 > n or n > 9:
+            n = 0
+
         if self.ble.connected:
             try:
                 self.ble_hid.release_all()
@@ -300,9 +301,6 @@ class Keyboard:
                 c.disconnect()
         if self.ble._adapter.advertising:
             self.ble.stop_advertising()
-
-        if 0 > n or n > 9:
-            return
 
         uid = self.uid[n : n + 6]
         uid[-1] = uid[-1] | 0xC0
@@ -320,9 +318,18 @@ class Keyboard:
             print(e)
         self.log(self.ble._adapter.address)
 
-        self.start_advertising()
+    def change_bt(self, n):
+        if self.usb_status == 3:
+            self.usb_status = 1
+        if n != self.ble_id:
+            self.set_bt_id(n)
+            self.start_advertising()
+        elif not self.ble.connected and not self.ble._adapter.advertising:
+            self.start_advertising()
+        self.update_connection()
 
     def toggle_bt(self):
+        bt_is_off = True
         if self.ble.connected:
             try:
                 self.ble_hid.release_all()
@@ -334,6 +341,13 @@ class Keyboard:
             self.stop_advertising()
         else:
             self.start_advertising()
+            bt_is_off = False
+        if bt_is_off:
+            if self.usb_status == 1:
+                self.usb_status = 3
+        else:
+            if self.usb_status == 3:
+                self.usb_status = 1
         self.update_connection()
 
     def toggle_usb(self):
@@ -371,12 +385,7 @@ class Keyboard:
         try:
             if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.press(*keycodes)
-                return
-        except Exception as e:
-            print(e)
-
-        try:
-            if self.ble.connected:
+            elif self.ble.connected:
                 self.ble_hid.press(*keycodes)
             elif not self.ble._adapter.advertising:
                 self.start_advertising()
@@ -387,12 +396,7 @@ class Keyboard:
         try:
             if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.release(*keycodes)
-                return
-        except Exception as e:
-            print(e)
-
-        try:
-            if self.ble.connected:
+            elif self.ble.connected:
                 self.ble_hid.release(*keycodes)
         except Exception as e:
             print(e)
@@ -401,12 +405,7 @@ class Keyboard:
         try:
             if self.usb_status == 0x3 and usb_is_connected():
                 self.usb_hid.send_consumer(keycode)
-                return
-        except Exception as e:
-            print(e)
-
-        try:
-            if self.ble.connected:
+            elif self.ble.connected:
                 self.ble_hid.send_consumer(keycode)
         except Exception as e:
             print(e)

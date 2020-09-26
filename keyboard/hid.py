@@ -85,4 +85,4 @@ class HID:
     def leds(self):
         if self._leds:
             return self._leds.report[0]
-        return None
+        return 0

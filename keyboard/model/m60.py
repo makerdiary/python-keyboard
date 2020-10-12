@@ -168,9 +168,8 @@ class Backlight:
             self.beacon,
             self.beacon2
         )
-        self.mode = 6
-        self.mode_function = self.modes[self.mode]
-        self.dynamic = True
+        self.set_mode(6)
+        self.enabled = False
 
     @property
     def hue(self):
@@ -322,7 +321,7 @@ class Backlight:
         for i in self.keys.keys():
             t = self.keys[i]
             self.pixel(i, *wheel2(255 - t, t))
-            t -= 1
+            t -= 4
             if t <= 0:
                 self.keys.pop(i)
             else:

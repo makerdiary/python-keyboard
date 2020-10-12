@@ -47,8 +47,8 @@ keyboard.keymap = (
     (
         BT_TOGGLE,BT1,BT2, BT3,BT4,BT5,BT6,BT7, BT8, BT9, BT0, ___, ___, ___,
         RGB_MOD, ___, ___, ___, ___, ___,___,USB_TOGGLE,___,___,___,___,___, ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
+        RGB_TOGGLE,HUE_RGB,RGB_HUE,SAT_RGB,RGB_SAT,___,___,___,___,___,___,___,      ___,
+        ___, ___, ___, ___, ___, ___, ___, ___,VAL_RGB,RGB_VAL, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -109,5 +109,7 @@ keyboard.pairs_handler = pairs_handler
 
 # Pairs: J & K, U & I
 keyboard.pairs = [{35, 36}, {20, 19}]
+
+# keyboard.verbose = False
 
 keyboard.run()

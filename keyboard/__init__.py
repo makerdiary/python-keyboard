@@ -20,12 +20,16 @@ from .action_code import *
 # fmt: off
 KEY_NAME =  (
     'ESC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'BACKSPACE',
-    '|', ']', '[', 'P', 'O', 'I', 'U', 'Y', 'T', 'R', 'E', 'W', 'Q', 'TAB', 'CAPS',
+    'CAPS', 'TAB', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '|',
     'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '"', 'ENTER',
-    'RSHIFT', '/', '.', ',', 'M', 'N', 'B', 'V', 'C', 'X', 'Z', 'LSHIFT',
+    'LSHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'RSHIFT',
     'LCTRL', 'LGUI', 'LALT', 'SPACE', 'RALT', 'MENU', 'FN', 'RCTRL'
 )
 # fmt: on
+
+
+def key_name(key):
+    return KEY_NAME[COORDS[key]]
 
 
 @micropython.asm_thumb
@@ -105,11 +109,12 @@ class Keyboard:
         self._connection = ""
         self.adv_timeout = None
 
-        self.data = array.array("L", microcontroller.nvm[:272])
+        size = 4 + self.matrix.keys
+        self.data = array.array("L", microcontroller.nvm[:size*4])
         if self.data[0] != 0x424B5950:
             self.data[0] = 0x424B5950
             self.data[1] = 1
-            for i in range(4, 68):
+            for i in range(4, size):
                 self.data[i] = 0
         self.ble_id = self.data[1]
         self.heatmap = memoryview(self.data)[4:]
@@ -211,7 +216,7 @@ class Keyboard:
         matrix = self.matrix
         event = matrix.view(start - 1)
         key = event & 0x7F
-        desc = KEY_NAME[key]
+        desc = key_name(key)
         if event < 0x80:
             desc += " \\ "
             t0 = matrix.get_keydown_time(key)
@@ -223,7 +228,7 @@ class Keyboard:
         for i in range(start, end):
             event = matrix.view(i)
             key = event & 0x7F
-            desc += KEY_NAME[key]
+            desc += key_name(key)
             if event < 0x80:
                 desc += " \\ "
                 t1 = matrix.get_keydown_time(key)
@@ -570,7 +575,7 @@ class Keyboard:
                         last_time = keydown_time
                         print(
                             "{} {} \\ {} latency {} | {}".format(
-                                key, KEY_NAME[key], hex(action_code), dt, dt2
+                                key, key_name(key), hex(action_code), dt, dt2
                             )
                         )
                 else:
@@ -619,6 +624,6 @@ class Keyboard:
                         last_time = keyup_time
                         print(
                             "{} {} / {} latency {} | {}".format(
-                                key, KEY_NAME[key], hex(action_code), dt, dt2
+                                key, key_name(key), hex(action_code), dt, dt2
                             )
                         )

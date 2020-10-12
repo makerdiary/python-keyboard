@@ -312,7 +312,7 @@ class Backlight:
         return True
 
     def handle_key(self, key, pressed):
-        if self.enabled and self.mode == 6:
+        if pressed and self.enabled and self.mode == 6:
             self.keys[key] = 255
 
     def elapse(self):
@@ -321,11 +321,12 @@ class Backlight:
         for i in self.keys.keys():
             t = self.keys[i]
             self.pixel(i, *wheel2(255 - t, t))
-            t -= 4
-            if t <= 0:
-                self.keys.pop(i)
+            if t >= 4:
+                self.keys[i] = t - 4
+            elif t > 0:
+                self.keys[i] = t - 1
             else:
-                self.keys[i] = t
+                self.keys.pop(i)
         self.update()
         return True
 

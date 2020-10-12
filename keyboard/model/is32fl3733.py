@@ -17,7 +17,8 @@ class IS31FL3733:
         self.power.direction = digitalio.Direction.OUTPUT
         self.power.value = 1
 
-        self.i2c = board.I2C()
+        # self.i2c = board.I2C()
+        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
         self.i2c.try_lock()
         # print(self.i2c.scan())
 

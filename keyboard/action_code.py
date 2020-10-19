@@ -3,6 +3,7 @@
 # reference:
 #   + https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2
 #
+# fmt: off
 
 NO = '\x00'
 TRANSPARENT = '\x01'
@@ -545,6 +546,17 @@ ACTION_USAGE_CONSUMER = lambda n: ACTION(ACT_USAGE, 1 << 10 | (n))
 ACTION_MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
 
 MACRO = lambda n: ACTION(ACT_MACRO, n)
+BACKLIGHT = lambda n: ACTION(ACT_BACKLIGHT, n)
+
+RGB_TOGGLE = BACKLIGHT(0)
+RGB_MOD = BACKLIGHT(1)
+MOD_RGB = BACKLIGHT(2)
+RGB_HUE = BACKLIGHT(3)
+HUE_RGB = BACKLIGHT(4)
+RGB_SAT = BACKLIGHT(5)
+SAT_RGB = BACKLIGHT(6)
+RGB_VAL = BACKLIGHT(7)
+VAL_RGB = BACKLIGHT(8)
 
 COMMAND = lambda opt, n: ACTION(ACT_COMMAND,  opt << 8 | n)
 

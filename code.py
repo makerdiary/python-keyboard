@@ -14,6 +14,7 @@ RSFT4 = LAYER_MODS(4, MODS(RSHIFT))
 
 # Semicolon & Ctrl
 SCC = MODS_TAP(MODS(RCTRL), ';')
+SINS = MODS_KEY(MODS(SHIFT), INSERT)
 
 keyboard.keymap = (
     # layer 0
@@ -37,9 +38,9 @@ keyboard.keymap = (
     # layer 2
     (
         '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
-        ___, ___, ___, ___, ___, ___, ___,PGUP, ___, ___, ___,AUDIO_VOL_DOWN,AUDIO_VOL_UP,AUDIO_MUTE,
+        ___, ___, ___, ___, ___, ___,HOME,PGUP, ___, ___,SINS,AUDIO_VOL_DOWN,AUDIO_VOL_UP,AUDIO_MUTE,
         ___, ___, ___, ___, ___, ___,LEFT,DOWN, UP,RIGHT, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___,PGDN, ___, ___, ___, ___,           ___,
+        ___, ___, ___, ___, ___, ___,PGDN,END, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 

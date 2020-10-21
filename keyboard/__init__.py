@@ -466,39 +466,31 @@ class Keyboard:
             n = matrix.wait(t)
             self.check()
 
-            if mouse_action:
-                x, y, wheel = MS_MOVEMENT[mouse_action]
-                dt = 1 + (time.monotonic_ns() - mouse_time) // 8000000
-                mouse_time = time.monotonic_ns()
-                self.move_mouse(x * dt, y * dt, wheel * dt)
+            if self.pair_keys:
+                # detecting pair keys
+                if n == 1:
+                    key = matrix.view(0)
+                    if key < 0x80 and key in self.pair_keys:
+                        n = matrix.wait(
+                            self.pair_delay
+                            - ms(matrix.time() - matrix.get_keydown_time(key))
+                        )
 
-            if n == 0:
-                continue
+                if n >= 2:
+                    pair = {matrix.view(0), matrix.view(1)}
+                    if pair in self.pairs:
+                        pair_index = self.pairs.index(pair)
+                        key1 = self.get()
+                        key2 = self.get()
 
-            # detecting pair keys
-            if n == 1:
-                key = matrix.view(0)
-                if key < 0x80 and key in self.pair_keys:
-                    n = matrix.wait(
-                        self.pair_delay
-                        - ms(matrix.time() - matrix.get_keydown_time(key))
-                    )
-
-            if n >= 2:
-                pair = {matrix.view(0), matrix.view(1)}
-                if pair in self.pairs:
-                    pair_index = self.pairs.index(pair)
-                    key1 = self.get()
-                    key2 = self.get()
-
-                    dt = ms(
-                        matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
-                    )
-                    log("pair keys {} {}, dt = {}".format(pair_index, pair, dt))
-                    try:
-                        self.pairs_handler(dev, pair_index)
-                    except Exception as e:
-                        print(e)
+                        dt = ms(
+                            matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
+                        )
+                        log("pair keys {} {}, dt = {}".format(pair_index, pair, dt))
+                        try:
+                            self.pairs_handler(dev, pair_index)
+                        except Exception as e:
+                            print(e)
 
             while len(matrix):
                 event = self.get()
@@ -670,3 +662,9 @@ class Keyboard:
                                 key, key_name(key), hex(action_code), dt, dt2
                             )
                         )
+
+            if mouse_action:
+                x, y, wheel = MS_MOVEMENT[mouse_action]
+                dt = 1 + (time.monotonic_ns() - mouse_time) // 8000000
+                mouse_time = time.monotonic_ns()
+                self.move_mouse(x * dt, y * dt, wheel * dt)

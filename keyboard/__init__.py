@@ -110,7 +110,7 @@ class Keyboard:
         self.adv_timeout = None
 
         size = 4 + self.matrix.keys
-        self.data = array.array("L", microcontroller.nvm[:size*4])
+        self.data = array.array("L", microcontroller.nvm[: size * 4])
         if self.data[0] != 0x424B5950:
             self.data[0] = 0x424B5950
             self.data[1] = 1
@@ -415,6 +415,33 @@ class Keyboard:
         except Exception as e:
             print(e)
 
+    def press_mouse(self, buttons):
+        try:
+            if self.usb_status == 0x3 and usb_is_connected():
+                self.usb_hid.press_mouse(buttons)
+            elif self.ble.connected:
+                self.ble_hid.press_mouse(buttons)
+        except Exception as e:
+            print(e)
+
+    def release_mouse(self, buttons):
+        try:
+            if self.usb_status == 0x3 and usb_is_connected():
+                self.usb_hid.release_mouse(buttons)
+            elif self.ble.connected:
+                self.ble_hid.release_mouse(buttons)
+        except Exception as e:
+            print(e)
+
+    def move_mouse(self, x=0, y=0, wheel=0):
+        try:
+            if self.usb_status == 0x3 and usb_is_connected():
+                self.usb_hid.move_mouse(x, y, wheel)
+            elif self.ble.connected:
+                self.ble_hid.move_mouse(x, y, wheel)
+        except Exception as e:
+            print(e)
+
     def get(self):
         event = self.matrix.get()
         key = event & 0x7F
@@ -432,10 +459,19 @@ class Keyboard:
         keys = [0] * matrix.keys
         ms = matrix.ms
         last_time = 0
+        mouse_action = 0
+        mouse_time = 0
         while True:
-            t = 20 if self.backlight.check() else 1000
+            t = 20 if self.backlight.check() or mouse_action else 1000
             n = matrix.wait(t)
             self.check()
+
+            if mouse_action:
+                x, y, wheel = MS_MOVEMENT[mouse_action]
+                dt = 1 + (time.monotonic_ns() - mouse_time) // 8000000
+                mouse_time = time.monotonic_ns()
+                self.move_mouse(x * dt, y * dt, wheel * dt)
+
             if n == 0:
                 continue
 
@@ -495,8 +531,11 @@ class Keyboard:
                             if action_code & 0x400:
                                 self.send_consumer(action_code & 0x3FF)
                         elif kind == ACT_MOUSEKEY:
-                            # todo
-                            pass
+                            if action_code & 0xF00 == 0:
+                                self.press_mouse(action_code & 0xF)
+                            else:
+                                mouse_action = (action_code >> 8) & 0xF
+                                mouse_time = time.monotonic_ns()
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = (action_code >> 8) & 0x1F
                             mask = 1 << layer
@@ -599,7 +638,11 @@ class Keyboard:
                             if action_code & 0x400:
                                 self.send_consumer(0)
                         elif kind == ACT_MOUSEKEY:
-                            pass
+                            if action_code & 0xF00 == 0:
+                                self.release_mouse(action_code & 0xF)
+                            elif (action_code >> 8) & 0xF == mouse_action:
+                                mouse_action = 0
+                                self.move_mouse(0, 0, 0)
                         elif kind == ACT_LAYER_TAP or kind == ACT_LAYER_TAP_EXT:
                             layer = (action_code >> 8) & 0x1F
                             keycode = action_code & 0xFF

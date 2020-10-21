@@ -545,6 +545,30 @@ ACTION_USAGE_SYSTEM = lambda n: ACTION(ACT_USAGE, n)
 ACTION_USAGE_CONSUMER = lambda n: ACTION(ACT_USAGE, 1 << 10 | (n))
 ACTION_MOUSEKEY = lambda key: ACTION(ACT_MOUSEKEY, key)
 
+
+MS_BTN1 = MOUSEKEY(1 << 0)
+MS_BTN2 = MOUSEKEY(1 << 1)
+MS_BTN3 = MOUSEKEY(1 << 2)
+MS_BTN4 = MOUSEKEY(1 << 3)
+MS_BTN5 = MOUSEKEY(1 << 4)
+MS_UP   = MOUSEKEY(1 << 8)
+MS_DN = MOUSEKEY(2 << 8)
+MS_LT = MOUSEKEY(3 << 8)
+MS_RT = MOUSEKEY(4 << 8)
+MS_UL = MOUSEKEY(5 << 8)
+MS_UR = MOUSEKEY(6 << 8)
+MS_DL = MOUSEKEY(7 << 8)
+MS_DR = MOUSEKEY(8 << 8)
+MS_W_UP = MOUSEKEY(9 << 8)
+MS_W_DN = MOUSEKEY(10 << 8)
+
+MS_MOVEMENT = (
+    (0, 0, 0),
+    (0, -2, 0), (0, 2, 0), (-2, 0, 0), (2, 0, 0),
+    (-1, -1, 0), (1, -1, 0), (-1, 1, 0), (1, 1, 0),
+    (0, 0, 1), (0, 0, -1)
+)
+
 MACRO = lambda n: ACTION(ACT_MACRO, n)
 BACKLIGHT = lambda n: ACTION(ACT_BACKLIGHT, n)
 

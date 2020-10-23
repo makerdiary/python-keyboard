@@ -1,5 +1,5 @@
-Python Keyboard
-===============
+PYKB - Python Keyboard
+======================
 
  English | [中文][1]
 ---------|----------

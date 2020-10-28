@@ -13,24 +13,9 @@ from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
 from .hid import HID
-from .model import Matrix, COORDS, Backlight, battery_level
+from .model import Matrix, COORDS, Backlight, battery_level, key_name
 from .action_code import *
 from .util import usb_is_connected, do_nothing
-
-
-# fmt: off
-KEY_NAME =  (
-    'ESC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'BACKSPACE',
-    'TAB', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '|',
-    'CAPS', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '"', 'ENTER',
-    'LSHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'RSHIFT',
-    'LCTRL', 'LGUI', 'LALT', 'SPACE', 'RALT', 'MENU', 'FN', 'RCTRL'
-)
-# fmt: on
-
-
-def key_name(key):
-    return KEY_NAME[COORDS[key]]
 
 
 def reset_into_bootloader():
@@ -476,7 +461,8 @@ class Keyboard:
                         key2 = self.get()
 
                         dt = ms(
-                            matrix.get_keydown_time(key2) - matrix.get_keydown_time(key1)
+                            matrix.get_keydown_time(key2)
+                            - matrix.get_keydown_time(key1)
                         )
                         log("pair keys {} {}, dt = {}".format(pair_index, pair, dt))
                         try:

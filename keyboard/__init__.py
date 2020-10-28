@@ -129,8 +129,6 @@ class Keyboard:
         self.set_bt_id(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
-        if not usb_is_connected():
-            self.change_bt(self.ble_id)
 
     def update_connection(self):
         if usb_is_connected() and self.usb_status == 3:
@@ -197,6 +195,9 @@ class Keyboard:
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
+
+        if not usb_is_connected():
+            self.change_bt(self.ble_id)
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)

@@ -105,10 +105,10 @@ class Keyboard:
 
     def on_device_changed(self, name):
         print("change to {}".format(name))
-        if name in self.action_maps:
-            self.current_keymap = self.action_maps[name]
+        if name in self.actionmaps:
+            self.actionmap = self.actionmaps[name]
         else:
-            self.current_keymap = self.actonmap
+            self.actionmap = self.default_actionmap
 
         # reset `layer_mask` when keymap is changed
         self.layer_mask = 1
@@ -144,11 +144,11 @@ class Keyboard:
 
     def setup(self):
         convert = lambda a: array.array("H", (get_action_code(k) for k in a))
-        self.actonmap = tuple(convert(layer) for layer in self.keymap)
-
-        self.action_maps = {}
+        self.default_actionmap = tuple(convert(layer) for layer in self.keymap)
+        self.actionmap = self.default_actionmap
+        self.actionmaps = {}
         for key in self.profiles:
-            self.action_maps[key] = tuple(
+            self.actionmaps[key] = tuple(
                 convert(layer) for layer in self.profiles[key]
             )
 
@@ -327,9 +327,9 @@ class Keyboard:
     def action_code(self, position):
         position = COORDS[position]
         layer_mask = self.layer_mask
-        for layer in range(len(self.current_keymap) - 1, -1, -1):
+        for layer in range(len(self.actionmap) - 1, -1, -1):
             if (layer_mask >> layer) & 1:
-                code = self.current_keymap[layer][position]
+                code = self.actionmap[layer][position]
                 if code == 1:  # TRANSPARENT
                     continue
                 return code

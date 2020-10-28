@@ -98,13 +98,16 @@ class HID:
         self.mouse.send_report(self.mouse_report)
 
     def release_all(self):
-        self.send_consumer(0)
-        for i in range(8):
-            self.report[i] = 0
-        self.keyboard.send_report(self.report)
-        for i in range(4):
-            self.mouse_report[i] = 0
-        self.mouse.send_report(self.mouse_report)
+        try:
+            self.send_consumer(0)
+            for i in range(8):
+                self.report[i] = 0
+            self.keyboard.send_report(self.report)
+            for i in range(4):
+                self.mouse_report[i] = 0
+            self.mouse.send_report(self.mouse_report)
+        except Exception as e:
+            print(e)
 
     @property
     def leds(self):

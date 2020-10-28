@@ -21,8 +21,8 @@ from .util import usb_is_connected
 # fmt: off
 KEY_NAME =  (
     'ESC', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'BACKSPACE',
-    'CAPS', 'TAB', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '|',
-    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '"', 'ENTER',
+    'TAB', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '|',
+    'CAPS', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', '"', 'ENTER',
     'LSHIFT', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'RSHIFT',
     'LCTRL', 'LGUI', 'LALT', 'SPACE', 'RALT', 'MENU', 'FN', 'RCTRL'
 )
@@ -48,15 +48,15 @@ class Device:
         self.suspend = kbd.matrix.suspend
 
     def send(self, *names):
-        keycodes = tuple(map(lambda n: get_action_code(n), names))
+        keycodes = map(get_action_code, names)
         self.kbd.send(*keycodes)
 
     def press(self, *names):
-        keycodes = map(lambda n: get_action_code(n), names)
+        keycodes = map(get_action_code, names)
         self.kbd.press(*keycodes)
 
     def release(self, *names):
-        keycodes = map(lambda n: get_action_code(n), names)
+        keycodes = map(get_action_code, names)
         self.kbd.release(*keycodes)
 
     def send_text(self, text):

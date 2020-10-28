@@ -7,3 +7,7 @@ def mem(r0):
 
 def usb_is_connected():
     return mem(0x40000438) == 0x3
+
+
+def do_nothing(*args, **kargs):
+    pass

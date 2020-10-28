@@ -15,7 +15,7 @@ from adafruit_ble.services.standard.hid import HIDService
 from .hid import HID
 from .model import Matrix, COORDS, Backlight, battery_level
 from .action_code import *
-from .util import usb_is_connected
+from .util import usb_is_connected, do_nothing
 
 
 # fmt: off
@@ -84,9 +84,9 @@ class Keyboard:
         self.profiles = {}
         self.pairs = pairs
         self.verbose = verbose
-        self.pairs_handler = lambda dev, n: None
+        self.pairs_handler = do_nothing
         self.pair_keys = set()
-        self.macro_handler = lambda dev, key, pressed: None
+        self.macro_handler = do_nothing
         self.layer_mask = 1
         self.matrix = Matrix()
         self.backlight = Backlight()

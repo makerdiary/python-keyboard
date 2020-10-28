@@ -15,6 +15,7 @@ from adafruit_ble.services.standard.hid import HIDService
 from .hid import HID
 from .model import Matrix, COORDS, Backlight, battery_level
 from .action_code import *
+from .util import usb_is_connected
 
 
 # fmt: off
@@ -30,16 +31,6 @@ KEY_NAME =  (
 
 def key_name(key):
     return KEY_NAME[COORDS[key]]
-
-
-@micropython.asm_thumb
-def mem(r0):
-    """Read memory from the address"""
-    ldr(r0, [r0, 0])
-
-
-def usb_is_connected():
-    return mem(0x40000438) == 0x3
 
 
 def reset_into_bootloader():

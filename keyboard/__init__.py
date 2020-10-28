@@ -64,11 +64,11 @@ class Device:
 
 
 class Keyboard:
-    def __init__(self, keymap=(), pairs=(), verbose=True):
+    def __init__(self, keymap=(), verbose=True):
         self.keymap = keymap
-        self.profiles = {}
-        self.pairs = pairs
         self.verbose = verbose
+        self.profiles = {}
+        self.pairs = ()
         self.pairs_handler = do_nothing
         self.pair_keys = set()
         self.macro_handler = do_nothing
@@ -77,12 +77,9 @@ class Keyboard:
         self.backlight = Backlight()
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
-        self.leds = None
         self.tap_delay = 500
         self.fast_type_thresh = 200
         self.pair_delay = 10
-
-        self._connection = ""
         self.adv_timeout = None
 
         size = 4 + self.matrix.keys
@@ -106,47 +103,34 @@ class Keyboard:
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
 
-    def update_connection(self):
-        if usb_is_connected() and self.usb_status == 3:
-            conn = "USB"
+    def on_device_changed(self, name):
+        print("change to {}".format(name))
+        if name in self.action_maps:
+            self.current_keymap = self.action_maps[name]
         else:
-            conn = "BT%d" % self.ble_id
-        if conn != self._connection:
-            self._connection = conn
-            if conn in self.action_maps:
-                self.current_keymap = self.action_maps[self._connection]
-            else:
-                self.current_keymap = self.actonmap
-            print("Connection changed to %s" % self._connection)
+            self.current_keymap = self.actonmap
 
-            # reset `layer_mask` when keymap is changed
-            self.layer_mask = 1
+        # reset `layer_mask` when keymap is changed
+        self.layer_mask = 1
 
     def check(self):
         if self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
                 self.backlight.set_bt_led(None)
-                for c in self.ble.connections:
-                    try:
-                        # 11.25 ms is the min connection interval for most systems
-                        c.connection_interval = 11.25
-                    except Exception:
-                        print("Failed to set ble connection interval")
-                    # Avoid getting connection_interval, as it may block forever
-                    # self.log('ble connection interval {}'.format(c.connection_interval))
             elif time.time() > self.adv_timeout:
                 self.stop_advertising()
 
         if usb_is_connected():
             if self.usb_status == 0:
                 self.usb_status = 3
-                self.update_connection()
-        elif self.usb_status > 0:
+                self.on_device_changed("USB")
+        else:
+            if self.usb_status == 3:
+                self.on_device_changed("BT{}".format(self.ble_id))
+                if not self.ble.connected and not self.ble._adapter.advertising:
+                    self.start_advertising()
             self.usb_status = 0
-            self.update_connection()
-            if not self.ble.connected and not self.ble._adapter.advertising:
-                self.start_advertising()
 
         if self.usb_status == 3:
             self.backlight.set_hid_leds(self.usb_hid.leds)
@@ -171,9 +155,6 @@ class Keyboard:
         for pair in self.pairs:
             for key in pair:
                 self.pair_keys.add(key)
-
-        if not usb_is_connected():
-            self.change_bt(self.ble_id)
 
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
@@ -275,10 +256,7 @@ class Keyboard:
             n = 0
 
         if self.ble.connected:
-            try:
-                self.ble_hid.release_all()
-            except Exception as e:
-                print(e)
+            self.ble_hid.release_all()
             for c in self.ble.connections:
                 c.disconnect()
         if self.ble._adapter.advertising:
@@ -301,22 +279,24 @@ class Keyboard:
         self.log(self.ble._adapter.address)
 
     def change_bt(self, n):
+        changed = False
         if self.usb_status == 3:
             self.usb_status = 1
+            changed = True
         if n != self.ble_id:
+            changed = True
             self.set_bt_id(n)
             self.start_advertising()
         elif not self.ble.connected and not self.ble._adapter.advertising:
             self.start_advertising()
-        self.update_connection()
+
+        if changed:
+            self.on_device_changed("BT{}".format(n))
 
     def toggle_bt(self):
         bt_is_off = True
         if self.ble.connected:
-            try:
-                self.ble_hid.release_all()
-            except Exception as e:
-                print(e)
+            self.ble_hid.release_all()
             for c in self.ble.connections:
                 c.disconnect()
         elif self.ble._adapter.advertising:
@@ -325,24 +305,24 @@ class Keyboard:
             self.start_advertising()
             bt_is_off = False
         if bt_is_off:
-            if self.usb_status == 1:
+            if usb_is_connected() and self.usb_status != 3:
                 self.usb_status = 3
+                self.on_device_changed("USB")
         else:
             if self.usb_status == 3:
                 self.usb_status = 1
-        self.update_connection()
+                self.on_device_changed("BT{}".format(self.ble_id))
 
     def toggle_usb(self):
-        if usb_is_connected():
-            if self.usb_status == 1:
-                self.usb_status = 3
-            else:
-                self.usb_status = 1
-                try:
-                    self.usb_hid.release_all()
-                except Exception as e:
-                    print(e)
-        self.update_connection()
+        if self.usb_status == 3:
+            self.usb_status = 1
+            self.usb_hid.release_all()
+            if not self.ble.connected and not self.ble._adapter.advertising:
+                self.start_advertising()
+            self.on_device_changed("BT{}".format(self.ble_id))
+        elif usb_is_connected():
+            self.usb_status = 3
+            self.on_device_changed("USB")
 
     def action_code(self, position):
         position = COORDS[position]
@@ -530,7 +510,7 @@ class Keyboard:
                             else:
                                 self.layer_mask |= mask
 
-                            log("layers {}".format(self.layer_mask))
+                            log("layer_mask = {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
                             if callable(self.macro_handler):
                                 i = action_code & 0xFFF
@@ -622,7 +602,7 @@ class Keyboard:
                                 keycodes = mods_to_keycodes(mods)
                                 self.release(*keycodes)
                             self.layer_mask &= ~(1 << layer)
-                            log("layers {}".format(self.layer_mask))
+                            log("layer_mask = {}".format(self.layer_mask))
                         elif kind == ACT_MACRO:
                             i = action_code & 0xFFF
                             try:

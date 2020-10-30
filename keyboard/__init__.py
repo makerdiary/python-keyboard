@@ -6,21 +6,16 @@ import _bleio
 import microcontroller
 import usb_hid
 
-import adafruit_ble
+from adafruit_ble import BLERadio
 from adafruit_ble.advertising import Advertisement
 from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
+from .action_code import *
 from .hid import HID
 from .model import Matrix, COORDS, Backlight, battery_level, key_name
-from .action_code import *
 from .util import usb_is_connected, do_nothing
-
-
-def reset_into_bootloader():
-    microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
-    microcontroller.reset()
 
 
 class Device:
@@ -98,7 +93,7 @@ class Keyboard:
         self.battery_update_time = time.time() + 360
         self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
-        self.ble = adafruit_ble.BLERadio()
+        self.ble = BLERadio()
         self.set_bt_id(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
@@ -537,7 +532,8 @@ class Keyboard:
                                 self.backlight.val -= 8
                         elif kind == ACT_COMMAND:
                             if action_code == BOOTLOADER:
-                                reset_into_bootloader()
+                                microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
+                                microcontroller.reset()
                             elif action_code == SUSPEND:
                                 matrix.suspend()
                             elif action_code == SHUTDOWN:

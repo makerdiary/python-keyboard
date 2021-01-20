@@ -1,8 +1,11 @@
-
 from keyboard import *
 
-
 keyboard = Keyboard()
+
+keyboard.matrix.debounce_time = 8    # about 8 milliseconds
+keyboard.tap_delay = 200
+keyboard.fast_type_thresh = 100
+
 
 ___ = TRANSPARENT
 BOOT = BOOTLOADER
@@ -16,23 +19,27 @@ L5S = LAYER_TAP(5, S)
 # Semicolon & Ctrl
 SCC = MODS_TAP(MODS(RCTRL), ';')
 SINS = MODS_KEY(MODS(SHIFT), INSERT)
+CTLESC = MODS_TAP(MODS(LCTRL), ESC)
+CTLCAP = MODS_TAP(MODS(LCTRL), CAPS)
+TABFUNC = LAYER_TAP(2, TAB)
+SPCFUNC = LAYER_TAP(1, SPACE)
 
 keyboard.keymap = (
     # layer 0
     (
         ESC,   1,   2,   3,   4,   5,   6,   7,   8,   9,   0, '-', '=', BACKSPACE,
-        TAB,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
-        CAPS,  A,   S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
+        TABFUNC,   Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
+        CTLESC, A,  L5S, L2D,   F,   G,   H,   J,   K,   L, SCC, '"',    ENTER,
         LSFT4, Z,   X,   C,   V, L3B,   N,   M, ',', '.', '/',         RSFT4,
-        LCTRL, LGUI, LALT,          SPACE,            RALT, MENU,  L1, RCTRL
+        CTLCAP, LGUI, LALT,          SPCFUNC,            RALT, MENU,  L1, RCTRL
     ),
 
     # layer 1
     (
         '`',  F1,  F2,  F3,  F4,  F5,  F6,  F7,  F8,  F9, F10, F11, F12, DEL,
-        ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___,SUSPEND,___,___,___,
+        ___, ___,  UP, ___, ___, ___, ___, ___, ___, ___,___,___,___,___,
         ___,LEFT,DOWN,RIGHT,___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___,BOOT, ___,MACRO(0), ___, ___, ___,       ___,
+        ___, ___, ___, ___, ___,___, ___,MACRO(0), ___, ___, ___,       ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -48,7 +55,7 @@ keyboard.keymap = (
     # layer 3
     (
         BT_TOGGLE,BT1,BT2, BT3,BT4,BT5,BT6,BT7, BT8, BT9, BT0, ___, ___, ___,
-        RGB_MOD, ___, ___, ___, ___, ___,___,USB_TOGGLE,___,___,___,___,___, ___,
+        RGB_MOD, ___, ___, ___, ___, BOOT,___,USB_TOGGLE,___,___,SUSPEND,___,___, ___,
         RGB_TOGGLE,HUE_RGB,RGB_HUE,SAT_RGB,RGB_SAT,___,___,___,___,___,___,___,      ___,
         ___, ___, ___, ___, ___, ___, ___, ___,VAL_RGB,RGB_VAL, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
@@ -60,7 +67,7 @@ keyboard.keymap = (
         ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
         ___, ___, ___,   D, ___, ___, ___, ___, ___, ___, ';', ___,      ___,
         ___, ___, ___, ___, ___,   B, ___, ___, ___, ___, ___,           ___,
-        ___, ___, ___,                ___,               ___, ___, ___,  ___
+        ___, ___, ___,                SPACE,               ___, ___, ___,  ___
     ),
 
     # layer 5
@@ -70,7 +77,7 @@ keyboard.keymap = (
         ___, ___, ___, ___, ___, ___,MS_BTN1,MS_LT,MS_DN,MS_RT,MS_BTN2, ___,      ___,
         ___, ___, ___, ___, ___, ___,MS_W_DN,MS_DL,MS_DN,MS_DR, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
-    ),
+    ),    
 )
 
 # Use different keymaps on different connections

@@ -188,7 +188,14 @@ class Keyboard:
             else:
                 desc += " / "
                 t1 = matrix.get_keyup_time(key)
-            dt = matrix.ms(t1 - t0)
+
+            dt = 0    
+            try:    
+                dt = matrix.ms(t1 - t0)
+
+            except OverflowError:            
+                print('An exception flew by!')                
+
             t0 = t1
             t.append(dt)
 
@@ -262,7 +269,7 @@ class Keyboard:
         address = _bleio.Address(uid, _bleio.Address.RANDOM_STATIC)
         try:
             self.ble._adapter.address = address
-            name = "PYKB {}".format(n)
+            name = "galen's PYKB {}".format(n)
             self.advertisement.complete_name = name
             self.ble.name = name
             self.ble_id = n
@@ -555,9 +562,16 @@ class Keyboard:
 
                     if self.verbose:
                         keydown_time = matrix.get_keydown_time(key)
-                        dt = ms(matrix.time() - keydown_time)
-                        dt2 = ms(keydown_time - last_time)
-                        last_time = keydown_time
+                        dt = 0
+                        dt2 = 0
+                        try:
+                            dt = ms(matrix.time() - keydown_time)
+                            dt2 = ms(keydown_time - last_time)
+                        except OverflowError:
+                            print('An exception flew by!')
+                        finally:    
+                            last_time = keydown_time
+
                         print(
                             "{} {} \\ {} latency {} | {}".format(
                                 key, key_name(key), hex(action_code), dt, dt2
